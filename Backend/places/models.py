@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 #데이터베이스 모델 정의
 from django.db import models
 
@@ -13,3 +14,8 @@ class Accessibility(models.Model):
 
     def __str__(self):
         return self.name or f"Place (ID: {self.kakao_place_id})"
+=======
+from django.db import models
+
+# Create your models here.
+>>>>>>> f0d9ca87a04010bdc1ed6ce86a412fa2f9ef480c
