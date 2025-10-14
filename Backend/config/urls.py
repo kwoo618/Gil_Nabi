@@ -1,7 +1,4 @@
-<<<<<<< HEAD
-#전체 URL 라우팅 관리
-=======
->>>>>>> f0d9ca87a04010bdc1ed6ce86a412fa2f9ef480c
+
 """
 URL configuration for config project.
 
@@ -20,8 +17,11 @@ Including another URLconf
 """
 
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
+from places.views import show_map
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
+    path('admin/', admin.site.urls),
+    path('api/places/', include('places.urls')),
+    path('', show_map, name='show-map'),
 ]

@@ -1,7 +1,14 @@
-<<<<<<< HEAD
 #요청/응답 로직 작성
-=======
->>>>>>> f0d9ca87a04010bdc1ed6ce86a412fa2f9ef480c
 from django.shortcuts import render
+from rest_framework import generics
+from .models import Accessibility
+from .serializers import AccessibilitySerializer
 
+class AccessibilityListCreate(generics.ListCreateAPIView):
+    queryset = Accessibility.objects.all()
+    serializer_class = AccessibilitySerializer
+
+
+def show_map(request):
+    return render(request, 'map.html')
 # Create your views here.
