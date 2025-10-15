@@ -76,9 +76,13 @@ WSGI_APPLICATION = "config.wsgi.application"
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'gilnabi_db',      # 1단계에서 만든 데이터베이스 이름
+        'USER': 'postgres',         # PostgreSQL 설치 시 설정한 사용자 이름
+        'PASSWORD': 'qwer1234',# PostgreSQL 설치 시 설정한 비밀번호
+        'HOST': 'localhost',        # 보통 localhost 또는 127.0.0.1 입니다.
+        'PORT': '5432',             # PostgreSQL 기본 포트
     }
 }
 
