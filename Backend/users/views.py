@@ -13,7 +13,7 @@ from .models import User # User 모델 가져오기
 import requests # 외부 API 호출용
 
 # 로그인 API 클래스 
-class SeriaLoginView(APIView):
+class SocialLoginView(APIView):
     # APIView 상속 -> POST, GET 같은 HTTP 요청 처리 가능
     # 클래스 내부에서 POST 메서드 정의 -> 로그인 요청 처리
     """ KaKao or Naver 액세스 토큰으로 로그인 처리 """ 
@@ -24,7 +24,7 @@ class SeriaLoginView(APIView):
         serializer = SocialLoginSerializer(data=request.data) # 요청 데이터로 시리얼라이저 객체 생성
         serializer.is_valid(raise_exception=True) # 데이터 검증, 틀리면 자동 에러 반환 #.is_valid() -> True/False 반환
         provider = serializer.validated_data['provider'] # kakao or naver #
-        access_token = sirializer.validated_data['access_token'] # 소셜 로그인 토큰
+        access_token = serializer.validated_data['access_token'] # 소셜 로그인 토큰
 
         # 소셜 API 호출 
         # KaKao API 호출
@@ -38,15 +38,14 @@ class SeriaLoginView(APIView):
             profile_image = user_info.get('kakao_account', {}).get('profile', {}).get('profile_image_url') # 프로필 이미지 URL
 
         # Naver API 호출
-        elif provider == 'naver':
+        elif provider == 'google':
             user_info = requests.get(
-                'https://openapi.naver.com/v1/nid/me',
+                'https://www.googleapis.com/oauth2/v2/userinfo',
                 headers={'Authorization': f'Bearer {access_token}'}
             ).json() # JSON 응답
-            response = user_info.get('response', {})
-            social_id = response.get('id') # 네이버 고유 ID
-            username = response.get('nickname', 'NaverUser') # 닉네임, 없으면 기본값 "NaverUser"
-            profile_image = response.get('profile_image') # 프로필 이미지 URL
+            social_id = user_info.get('id') # 구글 고유 ID
+            username = user_info.get('name', 'GoogleUser') # 닉네임, 없으면 기본값 "GoogleUser"
+            profile_image = user_info.get('picture') # 프로필 이미지 URL
 
         # 닉네임 중복 처리 (DB에 이미 있는 닉네임이면 뒤에 숫자 붙이기)
         original_username = username

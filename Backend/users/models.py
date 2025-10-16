@@ -28,10 +28,20 @@ class UserManager(BaseUserManager): # User 객체를 DB에 생성/관리하는 �
         
         # 관리자 생성 
             # 강제로 is_staff=True, is_superuser=True 설정
-        def create_superuser(self, social_id, provider, username, **extra_fields):
-            extra_fields.setdefault('is_staff', True) # Django 관리 사이트(Admin)에 로그인할 수 있는 권한
-            extra_fields.setdefault('is_superuser', True) # 모든 권한(읽기/쓰기/삭제 등)을 가진 최고 관리자 계정
-            return self.create_user(social_id, provider, username, **extra_fields)
+    def create_superuser(self, social_id, provider, username, **extra_fields):
+        extra_fields.setdefault('is_staff', True) # Django 관리 사이트(Admin)에 로그인할 수 있는 권한
+        extra_fields.setdefault('is_superuser', True) # 모든 권한(읽기/쓰기/삭제 등)을 가진 최고 관리자 계정
+        
+        # create_user를 직접 호출하지 않고, 모델을 직접 생성
+        # 이렇게 해야 is_staff, is_superuser 값이 올바르게 저장됨
+        user = self.model(
+            social_id=social_id,
+            provider=provider,
+            username=username,
+            **extra_fields
+        )
+        user.save(using=self._db)
+        return user
 
 # 사용자 모델 정의
 class User(AbstractBaseUser, PermissionsMixin): # AbstractBaseUser + PermissionsMixin 상속 → Django 인증/권한 기능 사용 가능
