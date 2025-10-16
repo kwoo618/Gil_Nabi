@@ -5,7 +5,9 @@ from django.db import models # Django 모델과 권한 관련 클래스 불러�
 from django.contrib.auth.models import (
     AbstractBaseUser, # 로그인 기능 , 소셜 로그인만 사용할 때도 권한 시스템과 호환 가능
     BaseUserManager, # 사용자 생성/관리 기능, 사용자 생성 함수(create_user, create_superuser)를 만들 때 사용
-    PermissionsMixin # 권한 그룹, superuser 기능 제공
+    PermissionsMixin, # 권한 그룹, superuser 기능 제공
+    Group, # Django에서 권한 그룹을 나타내는 모델, ex) 관리자, 회원, 운영자 같은 그룹.
+    Permission # Django의 권한(permission) 모델
 )
 
 # 사용자 관리자 클래스 정의
@@ -35,25 +37,41 @@ class UserManager(BaseUserManager): # User 객체를 DB에 생성/관리하는 �
 class User(AbstractBaseUser, PermissionsMixin): # AbstractBaseUser + PermissionsMixin 상속 → Django 인증/권한 기능 사용 가능
     SOCIAL_PROVIDERS = ( # 소셜 로그인 제공자 선택지 (DB 컬럼에서 choices로 제한 가능)
         ('kakao', 'Kakao'), 
-        ('naver', 'Naver'),
+        ('google', 'Google'),
     )
     
     social_id = models.CharField(max_length=255, unique=True) # 소셜 로그인 고유 ID (중복 불가 (unique=True))
-    provider = models.CharField(max_length=20, choices=PROVIDER_CHOICES) # 어떤 소셜 로그인인지 저장
+    provider = models.CharField(max_length=20, choices=SOCIAL_PROVIDERS) # 어떤 소셜 로그인인지 저장
     username = models.CharField(max_length=50) # 앱 내 표시 닉네임 
-    profile_image = models.ImageField(upload_to='profiles', blank=True, null=True) # 프로필 이미지, upload_to='profiles/': 업로드 경로
+    profile_image = models.URLField(blank=True, null=True) # 프로필 이미지, upload_to='profiles/': 업로드 경로
     #  "blank=True": 폼/Serializer에서 값이 없어도 허용. 즉, 사용자 등록 시 프로필 이미지 없이 가입 가능
     #  "null=True": DB에서 NULL 값 허용. 즉, 사용자 등록 시 프로필 이미지가 없어도 가입 가능
 
-# Django 권한용
-is_active = models.BooleanField(default=True) # 활성 사용자 여부
-is_staff = models.BooleanField(default=False) # 관리자 여부
+    # Django 권한용
+    is_active = models.BooleanField(default=True) # 활성 사용자 여부    
+    is_staff = models.BooleanField(default=False) # 관리자 여부
 
-objects = UserManager() # 사용자 관리자 객체
+    # 충돌 방지용 related_name
+    groups = models.ManyToManyField(
+        Group,
+        related_name='custom_user_set',  # 기본 auth.User와 충돌 방지
+        blank=True,
+        help_text='The groups this user belongs to.',
+        verbose_name='groups',
+    )
+    user_permissions = models.ManyToManyField(
+        Permission,
+        related_name='custom_user_permissions_set',  # 기본 auth.User와 충돌 방지
+        blank=True,
+        help_text='Specific permissions for this user.',
+        verbose_name='user permissions',
+    )
 
-# 로그인 시 사용하는 필드 
-USERNAME_FIELD = 'social_id' # 소셜 로그인 고유 ID로 로그인
-REQUIRED_FIELDS = ['provider', 'username'] # 관리자 계정 생성 시 필수 입력 필드
+    objects = UserManager() # 사용자 관리자 객체
+
+    # 로그인 시 사용하는 필드 
+    USERNAME_FIELD = 'social_id' # 소셜 로그인 고유 ID로 로그인
+    REQUIRED_FIELDS = ['provider', 'username'] # 관리자 계정 생성 시 필수 입력 필드
  
 def __str__(self):
     return f"{self.provider}:{self.username}" # 객체 문자열 표현 (예: "kakao: 권동철")

@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-#전체 URL 라우팅 관리
-=======
->>>>>>> f0d9ca87a04010bdc1ed6ce86a412fa2f9ef480c
 """
 URL configuration for config project.
 
