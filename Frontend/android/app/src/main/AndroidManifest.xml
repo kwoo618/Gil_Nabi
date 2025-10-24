@@ -23,7 +23,7 @@
         </intent-filter>
       </activity>
 
-      <!-- ✅ 카카오 로그인 Activity -->
+      <!-- 카카오 로그인 Activity --> 
       <activity 
         android:name="com.kakao.sdk.auth.AuthCodeHandlerActivity"
         android:exported="true">

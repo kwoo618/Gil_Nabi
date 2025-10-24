@@ -16,16 +16,17 @@ buildscript {
         classpath("com.android.tools.build:gradle")
         classpath("com.facebook.react:react-native-gradle-plugin")
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin")
+        classpath("com.google.gms:google-services:4.4.4") // Google plugin
     }
 }
 
-apply plugin: "com.facebook.react.rootproject"
+apply plugin: "com.facebook.react.rootproject" 
 
-// ✅ 카카오 저장소 추가
+// 카카오 저장소 추가
 allprojects {
     repositories {
         google()
         mavenCentral()
-        maven { url 'https://devrepo.kakao.com/nexus/content/groups/public/' }
+        maven { url 'https://devrepo.kakao.com/nexus/content/groups/public/' } 
     }
 }
