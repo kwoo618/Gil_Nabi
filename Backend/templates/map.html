@@ -1,49 +1,23 @@
+{% load static %}
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8"/>
     <title>길나비 - 데이터베이스 연동 지도</title>
     <style>
-        html, body {
-            width: 100%;
-            height: 100%;
-            margin: 10px;
-            padding: 0;
-        }
-        #map {
-            width: 100%;
-            height: 100%;
-        }
+        /* CSS는 그대로 둠 */
+        html, body { width: 100%; height: 100%; margin: 10px; padding: 0; }
+        #map { width: 100%; height: 100%; }
     </style>
 </head>
 <body>
     <div id="map"></div>
 
-    <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=key"></script>
+    <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=508b2ac52c84b32d74cb1b0f82492118&libraries=services"></script>
 
     {{ places|json_script:"places-data" }}
-    <script>
-        // 3. 위에서 변환된 JSON 데이터를 가져와 JavaScript 객체 배열로 변환
-        const places = JSON.parse(document.getElementById('places-data').textContent);
 
-        // 지도 생성 기본 설정
-        const container = document.getElementById('map');
-        const options = {
-            center: new kakao.maps.LatLng(35.900, 128.852),
-            level: 3
-        };
-        const map = new kakao.maps.Map(container, options);
+    <script src="{% static 'js/map.js' %}"></script>
 
-        // 4. places 배열의 각 데이터를 순회하며 마커를 생성하고 지도에 표시
-        places.forEach(function(place) {
-            
-            const marker = new kakao.maps.Marker({
-                position: new kakao.maps.LatLng(place.latitude, place.longitude),
-                title: place.building_name 
-            });
-
-            marker.setMap(map);
-        });
-    </script>
 </body>
 </html>
