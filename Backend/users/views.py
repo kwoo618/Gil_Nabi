@@ -16,14 +16,14 @@ import requests # 외부 API 호출용
 class SocialLoginView(APIView):
     # APIView 상속 -> POST, GET 같은 HTTP 요청 처리 가능
     # 클래스 내부에서 POST 메서드 정의 -> 로그인 요청 처리
-    """ KaKao or Naver 액세스 토큰으로 로그인 처리 """ 
+    """ KaKao or Google 액세스 토큰으로 로그인 처리 """ 
 
     # post 메서드 정의 
     def post(self, request):
         # 클라이언트에서 보낸 데이터 가져오기
         serializer = SocialLoginSerializer(data=request.data) # 요청 데이터로 시리얼라이저 객체 생성
         serializer.is_valid(raise_exception=True) # 데이터 검증, 틀리면 자동 에러 반환 #.is_valid() -> True/False 반환
-        provider = serializer.validated_data['provider'] # kakao or naver #
+        provider = serializer.validated_data['provider'] # kakao or google #
         access_token = serializer.validated_data['access_token'] # 소셜 로그인 토큰
 
         # 소셜 API 호출 
@@ -37,7 +37,7 @@ class SocialLoginView(APIView):
             username = user_info.get('kakao_account', {}).get('profile', {}).get('nickname', 'KaKaoUser') # 닉네임, 없으면 기본값 "KaKaoUser"
             profile_image = user_info.get('kakao_account', {}).get('profile', {}).get('profile_image_url') # 프로필 이미지 URL
 
-        # Naver API 호출
+        # Google API 호출
         elif provider == 'google':
             user_info = requests.get(
                 'https://www.googleapis.com/oauth2/v2/userinfo',
@@ -52,16 +52,16 @@ class SocialLoginView(APIView):
         counter = 1
         while User.objects.filter(username=username).exists():
             username = f"{original_username}_{counter}"
-            counter += 1
+            counter += 1 
         # 사용자 정보 DB 저장
 
 
         # DB에 사용자 정보 저장 (없으면 새로 생성)
             # DB에 이미 있는 사용자 조회 
         user, created = User.objects.get_or_create(
-            social_id=social_id,
+            social_id=social_id,    # 검색 조건 (이미 있으면 조회)
             provider=provider,
-            defaults={'username': username, 'profile_image': profile_image} # 새 사용자 생성 시 초기값
+            defaults={'username': username, 'profile_image': profile_image} # 없으면 생성
         )
 
         # 최종 사용자 정보 반환 
@@ -72,7 +72,7 @@ class SocialLoginView(APIView):
         
 
 # 요약 흐름 
-# 1. 클라이언트가 소셜 로그인 토큰과 제공자(kakao/naver) 전송
+# 1. 클라이언트가 소셜 로그인 토큰과 제공자(kakao/google) 전송
 # 2. 서버가 토큰 검증 및 소셜 API 호출로 사용자 정보 조회
 # 3. 사용자 정보를 DB에 저장 (없으면 새로 생성)
 # 3-1. 닉네임 중복 시 뒤에 숫자 붙여서 고유하게 만듦

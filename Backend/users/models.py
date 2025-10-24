@@ -1,5 +1,15 @@
-# DB 데이터 모델 정의 (User 정보)
-# 소셜 로그인을 해야됨 (카카오, 네이버)
+# 데이터베이스 설계도
+# User(사용자) 정보를 어떻게 저장할지 결정
+# 소셜 로그인을 해야됨 (카카오, 구글)
+
+# User 테이블 구조 
+# social_id: 카카오/구글에서 받은 고유 ID (중복 불가)
+# provider: 'kakao' 또는 'google'
+# username: 앱에서 표시할 닉네임
+# profile_image: 프로필 사진 URL
+# is_active: 활성 사용자 여부
+# is_staff: 관리자 권한 여부
+
 
 from django.db import models # Django 모델과 권한 관련 클래스 불러옴
 from django.contrib.auth.models import (
@@ -43,6 +53,7 @@ class UserManager(BaseUserManager): # User 객체를 DB에 생성/관리하는 �
         user.save(using=self._db)
         return user
 
+
 # 사용자 모델 정의
 class User(AbstractBaseUser, PermissionsMixin): # AbstractBaseUser + PermissionsMixin 상속 → Django 인증/권한 기능 사용 가능
     SOCIAL_PROVIDERS = ( # 소셜 로그인 제공자 선택지 (DB 컬럼에서 choices로 제한 가능)
@@ -69,7 +80,7 @@ class User(AbstractBaseUser, PermissionsMixin): # AbstractBaseUser + Permissions
         help_text='The groups this user belongs to.',
         verbose_name='groups',
     )
-    user_permissions = models.ManyToManyField(
+    user_permissions = models.ManyToManyField(  
         Permission,
         related_name='custom_user_permissions_set',  # 기본 auth.User와 충돌 방지
         blank=True,
@@ -83,5 +94,5 @@ class User(AbstractBaseUser, PermissionsMixin): # AbstractBaseUser + Permissions
     USERNAME_FIELD = 'social_id' # 소셜 로그인 고유 ID로 로그인
     REQUIRED_FIELDS = ['provider', 'username'] # 관리자 계정 생성 시 필수 입력 필드
  
-def __str__(self):
-    return f"{self.provider}:{self.username}" # 객체 문자열 표현 (예: "kakao: 권동철")
+    def __str__(self):
+        return f"{self.provider}:{self.username}" # 객체 문자열 표현 (예: "kakao: 권동철")
