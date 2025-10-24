@@ -12,6 +12,9 @@ import com.facebook.react.defaults.DefaultReactNativeHost
 import com.facebook.react.soloader.OpenSourceMergedSoMapping
 import com.facebook.soloader.SoLoader
 
+// 카카오 SDK import
+import com.kakao.sdk.common.KakaoSdk
+
 class MainApplication : Application(), ReactApplication {
 
   override val reactNativeHost: ReactNativeHost =
@@ -35,6 +38,10 @@ class MainApplication : Application(), ReactApplication {
 
   override fun onCreate() {
     super.onCreate()
+
+    // ✅ 카카오 SDK 초기화 (⚠️ 실제 네이티브 앱 키로 교체)
+    KakaoSdk.init(this, "{cb99ba5c4a37467b373ca6ab21a7886e}")
+
     SoLoader.init(this, OpenSourceMergedSoMapping)
     if (BuildConfig.IS_NEW_ARCHITECTURE_ENABLED) {
       // If you opted-in for the New Architecture, we load the native entry point for this app.

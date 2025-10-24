@@ -22,5 +22,21 @@
             <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
       </activity>
+
+      <!-- ✅ 카카오 로그인 Activity -->
+      <activity 
+        android:name="com.kakao.sdk.auth.AuthCodeHandlerActivity"
+        android:exported="true">
+        <intent-filter>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.DEFAULT" />
+            <category android:name="android.intent.category.BROWSABLE" />
+
+            <!-- 카카오 네이티브 앱 키 -->
+            <data android:host="oauth"
+                  android:scheme="kakao{cb99ba5c4a37467b373ca6ab21a7886e}" />
+        </intent-filter>
+      </activity>
+
     </application>
 </manifest>
