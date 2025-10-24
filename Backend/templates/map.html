@@ -3,21 +3,33 @@
 <html>
 <head>
     <meta charset="utf-8"/>
-    <title>길나비 - 데이터베이스 연동 지도</title>
+    <title>길나비 - 장소 정보 표시</title>
     <style>
-        /* CSS는 그대로 둠 */
-        html, body { width: 100%; height: 100%; margin: 10px; padding: 0; }
-        #map { width: 100%; height: 100%; }
+        html, body { width: 100%; height: 100% }
+        #map { width: 100%; height: 70%; /* 지도 높이 줄임 */ }
+        /* ✨ 정보 표시 영역 스타일 추가 */
+        #place-info {
+            width: 100%;
+            height: 25%; /* 나머지 공간 차지 */
+            padding: 10px;
+            box-sizing: border-box; /* 패딩 포함 크기 계산 */
+            border-top: 1px solid #ccc;
+            overflow-y: auto; /* 내용 길어지면 스크롤 */
+        }
+        #place-info h3 { margin-top: 0; }
     </style>
 </head>
 <body>
     <div id="map"></div>
+
+    <div id="place-info">
+        <p>지도를 클릭하여 장소를 선택하세요.</p>
+    </div>
 
     <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=508b2ac52c84b32d74cb1b0f82492118&libraries=services"></script>
 
     {{ places|json_script:"places-data" }}
 
     <script src="{% static 'js/map.js' %}"></script>
-
 </body>
 </html>
