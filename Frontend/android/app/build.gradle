@@ -111,8 +111,7 @@ dependencies {
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
 
-    // 카카오 로그인 추가
-    implementation project(':react-native-seoul-kakao-login')
+    // 카카오 SDK 추가
     implementation 'com.kakao.sdk:v2-user:2.20.1'
 
     if (hermesEnabled.toBoolean()) {

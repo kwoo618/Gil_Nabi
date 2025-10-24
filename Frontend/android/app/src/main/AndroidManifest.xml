@@ -34,7 +34,7 @@
 
             <!-- 카카오 네이티브 앱 키 -->
             <data android:host="oauth"
-                  android:scheme="kakao{cb99ba5c4a37467b373ca6ab21a7886e}" />
+                  android:scheme="kakaocb99ba5c4a37467b373ca6ab21a7886e" />
         </intent-filter>
       </activity>
 
