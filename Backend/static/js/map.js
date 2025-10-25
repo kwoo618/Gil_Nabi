@@ -78,7 +78,6 @@ kakao.maps.load(function() {
                 return null;
             }
         }
-        // Geocoder 성공했지만 키워드 못 찾은 경우 등 예외 처리
         console.log("findPlaceInfo: 주소는 찾았으나 Places 검색으로 이어지지 못함.");
         return null;
     }
@@ -89,16 +88,27 @@ kakao.maps.load(function() {
     }
 
     // --- 키워드 -> 장소 검색 함수 (Promise 반환) ---
-    function searchPlaceByKeyword(keyword, clickLatLng) {
-        console.log(`키워드 '${keyword}' 검색 중...`);
+    function searchPlaceByKeyword(keyword, centerLatLng = null) { // centerLatLng를 선택적 인자로 변경
+        console.log(`키워드 '${keyword}' 검색 중...` + (centerLatLng ? ` 중심:[${centerLatLng.toString()}]` : ' (전국)'));
+
+        // ✨ 검색 옵션 객체 동적 생성
+        const searchOptions = {
+            // category_group_code: 'SC4' // 필요시 카테고리 필터 추가 가능
+        };
+        if (centerLatLng) { // 중심 좌표가 주어졌을 때만 위치 기반 옵션 추가
+            searchOptions.location = centerLatLng;
+            searchOptions.radius = 500; // 또는 적절한 반경
+            searchOptions.sort = kakao.maps.services.SortBy.DISTANCE;
+        }
+
         return new Promise((resolve, reject) => {
             ps.keywordSearch(keyword, function(data, status, pagination) {
-                if (status === kakao.maps.services.Status.OK && data.length > 0) {
-                    resolve(data[0]); // 성공 시 첫 번째 결과 resolve
+                if (status === kakao.maps.services.Status.OK) { // ✨ data.length > 0 조건 제거
+                    resolve(data); // ✨ 성공 시 검색된 데이터 배열 전체(data)를 resolve
                 } else {
-                    reject(status); // 실패 시 상태 reject (ZERO_RESULT 등)
+                    reject(status);
                 }
-            }, { location: clickLatLng, radius: 500, sort: kakao.maps.services.SortBy.DISTANCE });
+            }, searchOptions);
         });
     }
 
@@ -121,31 +131,39 @@ kakao.maps.load(function() {
         });
     }
 
-    // --- 백엔드 확인 및 정보 표시/저장 함수 ---
+    // --- 백엔드 확인 및 정보 표시/저장 함수 (수정됨: Detail API 사용) ---
     async function checkAndDisplayPlaceDetails(placeInfo) {
-        if (!placeInfo || !placeInfo.id) { /* ... */ return; }
+        if (!placeInfo || !placeInfo.id) {
+            console.error("checkAndDisplayPlaceDetails: 유효하지 않은 placeInfo (ID 없음)", placeInfo);
+            placeInfoDiv.innerHTML = '<p>장소 정보를 가져오는데 실패했습니다 (ID 없음).</p>';
+            return;
+        }
         const kakaoPlaceId = String(placeInfo.id);
-        console.log(`백엔드에서 ID ${kakaoPlaceId} 확인 중 (Search)...`); // 로그 수정
+        console.log(`백엔드에서 ID ${kakaoPlaceId} 확인 중...`);
         try {
-            const response = await fetch(`/api/places/?search=${kakaoPlaceId}`);
+            // ✨ Detail API 주소로 GET 요청 시도
+            const response = await fetch(`/api/places/${kakaoPlaceId}/`); // <- Detail API 주소 사용!
+
             if (response.ok) {
-                const results = await response.json();
-                if (results.length > 0) { // DB 존재
-                    currentPlaceData = results[0];
-                    console.log("DB 존재:", currentPlaceData);
-                    displayMarkerAndInfo(currentPlaceData);
-                } else { // 신규
-                    currentPlaceData = placeInfo;
-                    console.log("DB 없음. 카카오 정보 사용 및 저장 시도.");
-                    displayMarkerAndInfo(placeInfo);
-                    savePlaceData(placeInfo);
-                }
+                 // --- 장소가 DB에 이미 존재할 때 ---
+                const existingPlaceData = await response.json(); // 상세 API는 객체 하나만 반환
+                console.log("DB 존재:", existingPlaceData);
+                currentPlaceData = existingPlaceData;
+                displayMarkerAndInfo(existingPlaceData); // DB 데이터(접근성 포함)로 표시
+
+            } else if (response.status === 404) {
+                 // --- 장소가 DB에 없을 때 (신규 장소) ---
+                 console.log("DB 없음 (404). 카카오 정보 사용 및 저장 시도.");
+                 currentPlaceData = placeInfo;
+                 displayMarkerAndInfo(placeInfo); // 카카오 정보로 표시 (접근성은 ??)
+                 savePlaceData(placeInfo); // DB에 저장
             } else {
-                 console.error("백엔드 장소 확인 API 오류:", response.status);
-                 placeInfoDiv.innerHTML = `<p>서버 장소 확인 오류 (${response.status})</p>`;
+                // 기타 서버 오류 (500 등)
+                console.error("백엔드 장소 확인/조회 API 오류:", response.status);
+                placeInfoDiv.innerHTML = `<p>서버 장소 확인 오류 (${response.status})</p>`;
             }
         } catch (error) {
-            console.error("백엔드 장소 확인 중 네트워크 오류:", error);
+            console.error("백엔드 장소 확인/조회 중 네트워크 오류:", error);
             placeInfoDiv.innerHTML = '<p>서버 통신 오류.</p>';
         }
     }
@@ -274,95 +292,53 @@ kakao.maps.load(function() {
         }
     }
 
-
     // --- 백엔드 데이터 저장 함수 (신규 장소용) ---
-function savePlaceData(placeInfo){
-     // 🚨 placeInfo 객체 자체와 내부 속성이 유효한지 다시 한번 확인
-     if (!placeInfo || !placeInfo.id || !placeInfo.place_name || !placeInfo.y || !placeInfo.x) {
-         console.error("savePlaceData: placeInfo 객체에 필수 정보가 부족합니다.", placeInfo);
-         alert("장소 정보를 DB에 저장할 수 없습니다 (정보 부족).");
-         return; // 저장 시도 중단
-     }
-
-     const newPlaceData = {
-        // building_name 필드 확인
-        building_name: placeInfo.place_name,
-        // id 필드 확인 (문자열로)
-        id: String(placeInfo.id), // 대체 ID 로직은 잠시 제거하고 카카오 ID만 사용
-        // latitude 필드 확인 (숫자로)
-        latitude: parseFloat(placeInfo.y),
-        // longitude 필드 확인 (숫자로)
-        longitude: parseFloat(placeInfo.x),
-        // 🚨 접근성 필드는 보내지 않음 (백엔드 기본값 null 사용)
-    };
-
-    // 🚨 전송 전 데이터 유효성 재확인 (특히 숫자 변환 후 NaN이 아닌지)
-    if (isNaN(newPlaceData.latitude) || isNaN(newPlaceData.longitude)) {
-        console.error("savePlaceData: 위도 또는 경도 변환 실패.", placeInfo);
-        alert("좌표값이 올바르지 않아 저장할 수 없습니다.");
-        return;
-    }
-    // 🚨 ID가 빈 문자열이 아닌지 확인
-    if (!newPlaceData.id) {
-         console.error("savePlaceData: ID 값이 비어있습니다.", placeInfo);
-         alert("장소 ID가 없어 저장할 수 없습니다.");
-         return;
+    function savePlaceData(placeInfo){
+        const newPlaceData = {
+            building_name: placeInfo.place_name,
+            id: String(placeInfo.id || `${placeInfo.address_name}_${placeInfo.place_name}`),
+            latitude: parseFloat(placeInfo.y),
+            longitude: parseFloat(placeInfo.x),
+        };
+        postNewPlace(newPlaceData);
     }
 
-    // 데이터 전송 함수 호출
-    postNewPlace(newPlaceData);
-}
-
-// --- 백엔드 API POST 요청 함수 (신규 장소용) ---
-async function postNewPlace(data) {
-    // 🚨 data 객체 자체 확인
-    if (!data || !data.id || !data.building_name || data.latitude == null || data.longitude == null ) {
-         console.error("postNewPlace: 전송할 데이터 객체가 유효하지 않습니다.", data);
-         alert("저장할 데이터가 올바르지 않습니다.");
-         return;
-    }
-
-    // ID는 문자열로 전송 (백엔드 CharField 가정)
-    data.id = String(data.id);
-
-    console.log("백엔드로 전송할 최종 데이터:", data); // 최종 데이터 확인 로그
-
-    try {
-        const response = await fetch('/api/places/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCSRFToken()
-            },
-            // 🚨 JSON 변환 확인
-            body: JSON.stringify(data)
-        });
-
-        if (response.ok) {
-            currentPlaceData = await response.json();
-            console.log('백엔드 신규 저장 성공:', currentPlaceData);
-        } else {
-            const errorData = await response.json(); // 에러 응답 내용 확인
-            console.warn('신규 저장 실패:', response.status, errorData); // 상태 코드와 내용 함께 출력
-
-            // 에러 메시지를 alert로 보여주기 (더 상세하게)
-            let errorMessage = `저장 실패 (${response.status}):\n`;
-            for (const field in errorData) {
-                errorMessage += `${field}: ${errorData[field].join(', ')}\n`;
+    // --- 백엔드 API POST 요청 함수 (신규 장소용) ---
+    async function postNewPlace(data) {
+        data.id = String(data.id);
+        console.log("백엔드로 전송할 데이터 (신규):", data);
+        try {
+            const response = await fetch('/api/places/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCSRFToken()
+                },
+                body: JSON.stringify(data)
+            });
+            if (response.ok) {
+                currentPlaceData = await response.json(); // 신규 저장 후 currentPlaceData 업데이트
+                console.log('백엔드 신규 저장 성공:', currentPlaceData);
+            } else {
+                const errorData = await response.json();
+                console.warn('신규 저장 실패:', response.status, errorData);
+                if (response.status === 400 && errorData.id && errorData.id.some(err => err.includes('already exists'))) {
+                     console.log('이미 등록된 장소입니다.');
+                     // 필요시 이미 등록된 장소 정보를 다시 로드
+                     // 예: checkAndDisplayPlaceDetails({id: data.id}); // 카카오 정보 대신 ID만 넘겨 재조회
+                } else {
+                     let errorMessage = `저장 실패 (${response.status}):\n`;
+                     for (const field in errorData) {
+                         errorMessage += `${field}: ${errorData[field].join(', ')}\n`;
+                     }
+                     alert(errorMessage);
+                }
             }
-            alert(errorMessage);
-
-            if (response.status === 400 && errorData.id && errorData.id.some(err => err.includes('already exists'))) {
-                 console.log('이미 등록된 장소입니다.');
-                 // 필요시 이미 등록된 장소 정보를 다시 로드하는 로직 추가
-                 // fetch(`/api/places/?id=${data.id}`).then(...)
-            }
+        } catch (error) {
+            console.error('네트워크 오류:', error);
+            alert('서버와 통신 중 오류가 발생했습니다.');
         }
-    } catch (error) {
-        console.error('네트워크 오류:', error);
-        alert('서버와 통신 중 오류가 발생했습니다.');
     }
-}
 
     // --- CSRF 토큰 함수 ---
     function getCSRFToken() {
@@ -401,7 +377,7 @@ async function postNewPlace(data) {
                             htmlContent += `
                                 <li>
                                     <strong>${place.building_name}</strong> (ID: ${place.id})<br>
-                                    좌표: ${place.latitude}, ${place.longitude}<br>
+                                    좌표: ${place.latitude.toFixed(6)}, ${place.longitude.toFixed(6)}<br>
                                     접근성:
                                     R:${getAccessibilitySymbol(place.has_ramp)} |
                                     W:${getAccessibilitySymbol(place.wheelchair)} |
@@ -414,8 +390,103 @@ async function postNewPlace(data) {
                         htmlContent += '</ul>';
                         placeInfoDiv.innerHTML = htmlContent;
                     } else { placeInfoDiv.innerHTML = '<p>DB에 저장된 장소가 없습니다.</p>'; }
-                } else { /* ... API 오류 처리 ... */ }
-            } catch (error) { /* ... 네트워크 오류 처리 ... */ }
+                } else {
+                    console.error("DB 데이터 로딩 API 오류:", response.status);
+                    placeInfoDiv.innerHTML = `<p>DB 데이터 로딩 중 오류 발생 (${response.status})</p>`;
+                }
+            } catch (error) {
+                console.error("DB 데이터 로딩 중 네트워크 오류:", error);
+                placeInfoDiv.innerHTML = '<p>서버 통신 오류.</p>';
+            }
+        });
+    }
+
+    // ==========================================================
+    // ✨ 14. 장소 검색 버튼 이벤트 리스너 (수정됨: async/await 추가)
+    // ==========================================================
+    const searchInput = document.getElementById('search-input');
+    const searchBtn = document.getElementById('search-btn');
+
+    console.log("검색 입력창:", searchInput);
+    console.log("검색 버튼:", searchBtn);
+
+    if (searchInput && searchBtn) {
+        console.log("검색 버튼 이벤트 리스너 추가 시도...");
+        searchBtn.addEventListener('click', handleSearch); // 함수 이름만 전달
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                handleSearch();
+            }
+        });
+        console.log("검색 버튼 이벤트 리스너 추가 완료.");
+    } else {
+        console.error("검색 입력창(#search-input) 또는 버튼(#search-btn)을 찾을 수 없습니다.");
+    }
+
+    // --- 15. 검색 실행 함수 (수정됨: 카카오 API 우선 호출) ---
+    async function handleSearch() {
+        console.log("Search button clicked!");
+        const query = searchInput.value.trim();
+        if (!query) { alert('검색어를 입력하세요.'); return; }
+        console.log(`카카오맵 API '${query}' 검색 시도...`);
+        placeInfoDiv.innerHTML = `<p>'${query}' 검색 중...</p>`;
+        if (selectedMarker) { selectedMarker.setMap(null); selectedMarker = null; }
+
+        try {
+            // ✨ 백엔드 대신 카카오 API 검색 함수 호출 (전국 단위)
+            const kakaoResults = await searchPlaceByKeyword(query); // await 사용
+
+            if (kakaoResults && kakaoResults.length > 0) { // 카카오 결과가 있으면
+                console.log("카카오 검색 결과:", kakaoResults);
+                // ✨ 카카오 검색 결과를 표시하는 함수 호출 (이름 변경)
+                displayKakaoSearchResults(kakaoResults, query);
+            } else {
+                // 카카오 API 검색 결과도 없는 경우
+                console.log(`카카오맵 API '${query}' 검색 결과 없음.`);
+                placeInfoDiv.innerHTML = `<p>'${query}'에 대한 검색 결과가 없습니다.</p>`;
+            }
+        } catch (errorStatus) {
+            // 카카오 API 검색 중 오류 발생 (ZERO_RESULT 포함될 수 있음)
+            console.error(`카카오 외부 검색 실패: ${errorStatus}`);
+            if (errorStatus === kakao.maps.services.Status.ZERO_RESULT) {
+                placeInfoDiv.innerHTML = `<p>'${query}'에 대한 검색 결과가 없습니다.</p>`;
+            } else {
+                placeInfoDiv.innerHTML = `<p>'${query}' 외부 검색 중 오류 발생: ${errorStatus}</p>`;
+            }
+        }
+    }
+
+    // --- 16. 카카오 검색 결과 목록 표시 함수 (수정됨) ---
+    function displayKakaoSearchResults(kakaoResults, query) { // 이름 변경
+        let htmlContent = `<h3>'${query}' 카카오맵 검색 결과</h3><ul>`;
+        kakaoResults.forEach((place, index) => {
+            // 각 결과를 리스트 항목으로 만들고, 클릭 시 처리할 함수 연결 준비
+            htmlContent += `
+                <li style="cursor: pointer;" data-place-index="${index}">
+                    <strong>${place.place_name}</strong> (${place.category_name})<br>
+                    <small>${place.address_name}</small>
+                    <small> | 좌표: ${parseFloat(place.y).toFixed(6)}, ${parseFloat(place.x).toFixed(6)}</small>
+                </li>
+                <hr>
+            `;
+        });
+        htmlContent += '</ul>';
+        placeInfoDiv.innerHTML = htmlContent;
+
+        // 각 검색 결과 항목(li)에 클릭 이벤트 리스너 추가
+        placeInfoDiv.querySelectorAll('li').forEach(item => {
+            item.addEventListener('click', async function() { // async 추가
+                const index = parseInt(this.getAttribute('data-place-index'));
+                const selectedKakaoPlace = kakaoResults[index]; // 클릭된 카카오 장소 데이터
+                console.log("카카오 검색 결과 선택:", selectedKakaoPlace);
+
+                // 지도 이동
+                const moveLatLng = new kakao.maps.LatLng(selectedKakaoPlace.y, selectedKakaoPlace.x);
+                map.panTo(moveLatLng);
+
+                // ✨ 선택된 카카오 정보를 가지고 DB 확인 및 최종 표시 함수 호출
+                await checkAndDisplayPlaceDetails(selectedKakaoPlace); // await 추가
+            });
         });
     }
 
