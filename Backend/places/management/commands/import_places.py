@@ -10,7 +10,7 @@ class Command(BaseCommand):
 
         with open(csv_file_path, 'r', encoding='utf-8') as file:
             reader = csv.reader(file)
-            next(reader)
+            next(reader) #첫번째줄 건너뜀
 
             Accessibility.objects.all().delete()
 
@@ -23,7 +23,7 @@ class Command(BaseCommand):
 
                 Accessibility.objects.create(
                     building_name=row[0],
-                    id=int(float(row[1])),  # ID를 정수로 변환
+                    id=str(row[1]),
                     has_ramp=has_ramp_bool, # 'ramp'가 아닌 'has_ramp'
                     wheelchair=wheelchair_bool,
                     accessible_toilet=accessible_toilet_bool,
