@@ -118,6 +118,8 @@ dependencies {
     // 구글 SDK 추가 
     implementation platform('com.google.firebase:firebase-bom:34.4.0')
     implementation 'com.google.firebase:firebase-auth'
+    // Google Sign-In 라이브러리 추가되어 있는지 확인
+    implementation 'com.google.android.gms:play-services-auth:21.0.0'
 
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-android")
@@ -125,3 +127,5 @@ dependencies {
         implementation jscFlavor
     }
 }
+
+apply plugin: "com.google.gms.google-services" // 구글 서비스 플러그인 적용

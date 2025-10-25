@@ -14,11 +14,11 @@
       },
       "oauth_client": [
         {
-          "client_id": "847051237257-8plr0og1ubvp7udcdj7hg5mv7qiqu5ik.apps.googleusercontent.com",
+          "client_id": "847051237257-j112hrhcl9u6ps4ggnj53bkfa7943jpi.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.gilnabiapp",
-            "certificate_hash": "7972a25baa960ce58de1ffab954802261aea38a6"
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
           }
         },
         {

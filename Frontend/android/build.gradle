@@ -5,7 +5,8 @@ buildscript {
         compileSdkVersion = 35
         targetSdkVersion = 34
         ndkVersion = "26.1.10909125"
-        kotlinVersion = "1.9.24"
+        // kotlinVersion = "1.9.24" (기존 버전 -> 충돌 문제로 아래 버전으로 변경 (코틀린 버전이 파이어베이스랑 충돌남)
+        kotlinVersion = "2.0.21"
     }
     repositories {
         google()
@@ -13,9 +14,9 @@ buildscript {
     }
     
     dependencies {
-        classpath("com.android.tools.build:gradle")
+        classpath("com.android.tools.build:gradle:8.1.4") // Android Gradle Plugin
         classpath("com.facebook.react:react-native-gradle-plugin")
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion") // 코틀린 명시적으로 표시
         classpath("com.google.gms:google-services:4.4.4") // Google plugin
     }
 }
