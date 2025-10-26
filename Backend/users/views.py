@@ -10,7 +10,7 @@ from rest_framework import status # HTTP 상태 코드
 # 시리얼라이저 가져오기 
 from .serializers import SocialLoginSerializer, UserSerializer
 from .models import User # User 모델 가져오기
-import requests # 외부 API 호출용
+import requests # 파이썬에서 다른 서버 API에 HTTP 요청 보낼 때 사용 (ex. 파이썬용 브라우저)
 
 # 로그인 API 클래스 
 class SocialLoginView(APIView):
@@ -30,9 +30,9 @@ class SocialLoginView(APIView):
         # KaKao API 호출
         if provider == 'kakao':
             user_info = requests.get(
-                'https://kapi.kakao.com/v2/user/me',
-                headers={'Authorization': f'Bearer {access_token}'}
-            ).json() # JSON 응답 
+                'https://kapi.kakao.com/v2/user/me', # KaKao 사용자 정보 API URL
+                headers={'Authorization': f'Bearer {access_token}'} # 요청 헤더에 토큰 정보를 담음
+            ).json() # 요청을 JSON으로 변환해서 파이썬 딕셔너리로 사용 가능.
             social_id = str(user_info['id']) # 카카오 고유 ID
             username = user_info.get('kakao_account', {}).get('profile', {}).get('nickname', 'KaKaoUser') # 닉네임, 없으면 기본값 "KaKaoUser"
             profile_image = user_info.get('kakao_account', {}).get('profile', {}).get('profile_image_url') # 프로필 이미지 URL
@@ -60,7 +60,7 @@ class SocialLoginView(APIView):
             # DB에 이미 있는 사용자 조회 
         user, created = User.objects.get_or_create(
             social_id=social_id,    # 검색 조건 (이미 있으면 조회)
-            provider=provider,
+            provider=provider,      # 카카오 or 구글
             defaults={'username': username, 'profile_image': profile_image} # 없으면 생성
         )
 
@@ -69,9 +69,7 @@ class SocialLoginView(APIView):
         data = UserSerializer(user).data # User 객체 -> JSON 변환
         return Response(data, status=status.HTTP_200_OK) # 200 OK 응답
 
-        
-
-# 요약 흐름 
+# 요약 흐름
 # 1. 클라이언트가 소셜 로그인 토큰과 제공자(kakao/google) 전송
 # 2. 서버가 토큰 검증 및 소셜 API 호출로 사용자 정보 조회
 # 3. 사용자 정보를 DB에 저장 (없으면 새로 생성)

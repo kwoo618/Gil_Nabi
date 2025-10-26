@@ -8,25 +8,25 @@
 # Django REST Framework에서 제공하는 serializers 가져오기 
 from rest_framework import serializers
 
-# User 모델 가져오기
+# User 모델 가져오기 (models.py에 정의된 User 모델)
 from .models import User
 
-# 외부 API 호출할 때 사용
+# 외부 API 호출할 때 사용  / requests 라이브러리
 import requests
 
-# DB User 정보를 변환/검증용 Serializer 정의
+# DB User 정보를 변환 Serializer 
 class UserSerializer(serializers.ModelSerializer):
     """ DB User 모델 기반 로그인 성공 후, 클라이언트에 반환할 사용자 정보 """
-    class Meta:
-        model = User # User 모델 사용
+    class Meta: # 메타 정보 설정 
+        model = User # User 모델 사용 
         fields = ['id', 'social_id', 'provider', 'username', 'profile_image']  # 클라이언트에 보내줄 정보
 
-# 소셜 로그인용 토큰 시리얼라이저 
+# 소셜 로그인 검증용 시리얼라이저
 class SocialLoginSerializer(serializers.Serializer):
     """ 클라이언트에서 보내는 소셜 로그인 정보 검증용"""
     provider = serializers.ChoiceField(
-        choices=['kakao', 'google'], # 허용되는 소셜 로그인 제공자
-        required=True # 필수 입력
+        choices=['kakao', 'google'], # 카카오인지 구글인지 둘 중 하나인지 검증하는 역할
+        required=True # 위에 choices 중 하나의 값이 필수로 입력돼서 와야된다는 뜻. 안오면 에러 발생
     )
 
     # 액세스 토큰은 보안이 필요한 정보임

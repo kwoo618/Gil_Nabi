@@ -26,7 +26,15 @@ SECRET_KEY = "django-insecure-omg&!wk5hfzu67o2ezo^q=7nl^t2cr&ruwfy=tlyu-31huf#n4
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+# 개발 환경에서는 이렇게 설정
+# 뜻 -> "10.0.2.2 주소로 오는 요청 받아줘!"
+ALLOWED_HOSTS = [
+    'localhost',
+    '127.0.0.1',
+    '10.0.2.2',      # 핵심! Android 에뮬레이터용
+    '*',             # 개발 중에만 사용 (배포 시 제거)
+]
+CORS_ALLOW_ALL_ORIGINS = True  # 개발 중에만 사용 (배포 시 제거)
 
 
 # Application definition
@@ -38,12 +46,14 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "corsheaders", # CORS 허용을 위한 앱
     "users"
 ]
 
 AUTH_USER_MODEL = "users.User"  # '앱이름.모델이름' 형식
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware", # CORS 미들웨어 추가
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -52,6 +62,9 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
+
+CORS_ALLOW_ALL_ORIGINS = True  # 개발 중에만 사용 (배포 시 제거)
+# 뜻 ->  "모든 출처에서 오는 요청 허용해!"
 
 ROOT_URLCONF = "config.urls"
 
