@@ -68,6 +68,24 @@ class User(AbstractBaseUser, PermissionsMixin): # AbstractBaseUser + Permissions
     #  "blank=True": 폼/Serializer에서 값이 없어도 허용. 즉, 사용자 등록 시 프로필 이미지 없이 가입 가능
     #  "null=True": DB에서 NULL 값 허용. 즉, 사용자 등록 시 프로필 이미지가 없어도 가입 가능
 
+    nickname = models.CharField(max_length=50, blank=True, null=True)
+    
+    DISABILITY_CHOICES = [
+        ('physical', '지체장애'),
+        ('visual', '시각장애'),
+        ('hearing', '청각장애'),
+        ('other', '기타'),
+    ]
+    disability_type = models.CharField(
+        max_length=20, 
+        choices=DISABILITY_CHOICES, 
+        blank=True, 
+        null=True
+    )
+    
+    has_wheelchair = models.BooleanField(default=False, null=True)
+    is_profile_complete = models.BooleanField(default=False)
+
     # Django 권한용
     is_active = models.BooleanField(default=True) # 활성 사용자 여부    
     is_staff = models.BooleanField(default=False) # 관리자 여부

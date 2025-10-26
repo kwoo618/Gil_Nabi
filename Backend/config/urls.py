@@ -16,7 +16,7 @@ Including another URLconf
 """
 
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include # import : Django에서 URL을 관리할 때 사용하는 함수
 
 urlpatterns = [
     path('admin/', admin.site.urls),
