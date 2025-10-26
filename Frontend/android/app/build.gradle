@@ -121,6 +121,8 @@ dependencies {
     // Google Sign-In 라이브러리 추가되어 있는지 확인
     implementation 'com.google.android.gms:play-services-auth:21.0.0'
 
+    // manifestPlaceholders = [kakaoAppKey: "여기에네이티브앱키"] // 카카오 네이티브 앱 키 추가
+
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-android")
     } else {
