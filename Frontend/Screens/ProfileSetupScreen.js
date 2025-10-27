@@ -1,3 +1,5 @@
+console.log('✅ ProfileSetupScreen 로드됨');
+
 import React, { useState } from 'react';
 import {
   View,

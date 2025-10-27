@@ -1,3 +1,5 @@
+console.log('✅ LoginScreen 로드됨');
+
 import React, { useEffect } from 'react';
 import {
   View,
@@ -16,7 +18,7 @@ export default function LoginScreen({ navigation }) {
   useEffect(() => {
     // 구글 로그인 설정
     GoogleSignin.configure({
-      webClientId: '여기에_구글_웹_클라이언트_ID.apps.googleusercontent.com',
+      webClientId: '847051237257-t1q2tmripa4up0o568iguvd1vmpiqhsu.apps.googleusercontent.com',
       offlineAccess: true,
     });
   }, []);

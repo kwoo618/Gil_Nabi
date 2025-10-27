@@ -1,3 +1,5 @@
+console.log('✅ MainScreen 로드됨');
+
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 
