@@ -1,9 +1,9 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';  // ← 이 줄 확인!
-import LoginScreen from './screens/LoginScreen';
-import ProfileSetupScreen from './screens/ProfileSetupScreen';
-import MainScreen from './screens/MainScreen';
+import LoginScreen from './Screens/LoginScreen';
+import ProfileSetupScreen from './Screens/ProfileSetupScreen';
+import MainScreen from './Screens/MainScreen';
 
 const Stack = createNativeStackNavigator();  // ← 이 줄 확인!
 
