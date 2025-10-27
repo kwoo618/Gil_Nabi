@@ -68,6 +68,7 @@ class User(AbstractBaseUser, PermissionsMixin): # AbstractBaseUser + Permissions
     #  "blank=True": 폼/Serializer에서 값이 없어도 허용. 즉, 사용자 등록 시 프로필 이미지 없이 가입 가능
     #  "null=True": DB에서 NULL 값 허용. 즉, 사용자 등록 시 프로필 이미지가 없어도 가입 가능
 
+    # 추가 사용자 정보 (장애 유형, 휠체어 사용 여부, 프로필 완성도)
     nickname = models.CharField(max_length=50, blank=True, null=True)
     
     DISABILITY_CHOICES = [
