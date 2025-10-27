@@ -112,8 +112,8 @@ dependencies {
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
 
-    // 카카오 SDK 추가
-    implementation 'com.kakao.sdk:v2-user:2.20.1'
+    // 카카오 SDK 추가  자동으로 포함되므로 주석 처리
+    // implementation 'com.kakao.sdk:v2-user:2.20.1'
 
     // 구글 SDK 추가 
     implementation platform('com.google.firebase:firebase-bom:34.4.0')

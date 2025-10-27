@@ -40,7 +40,7 @@ class MainApplication : Application(), ReactApplication {
     super.onCreate()
 
     // ✅ 카카오 SDK 초기화 (⚠️ 실제 네이티브 앱 키로 교체)
-    KakaoSdk.init(this, "{cb99ba5c4a37467b373ca6ab21a7886e}")
+    KakaoSdk.init(this, "cb99ba5c4a37467b373ca6ab21a7886e")
 
     SoLoader.init(this, OpenSourceMergedSoMapping)
     if (BuildConfig.IS_NEW_ARCHITECTURE_ENABLED) {
