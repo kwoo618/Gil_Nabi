@@ -72,3 +72,19 @@ yarn-error.log
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
+
+# 가상 환경 폴더 (매우 중요!)
+venv/
+
+# 파이썬 캐시 파일
+__pycache__/
+*.pyc
+
+# Django 임시 데이터베이스
+db.sqlite3
+
+# 나중에 만들 비밀 설정 파일
+.env
+
+# VSCode 설정 폴더
+.vscode/
