@@ -12,6 +12,10 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import os # os 모듈 import
+from dotenv import load_dotenv # dotenv import
+
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -21,7 +25,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-omg&!wk5hfzu67o2ezo^q=7nl^t2cr&ruwfy=tlyu-31huf#n4"
+SECRET_KEY = os.getenv('SECRET_KEY') # .env 파일에서 SECRET_KEY 값을 읽어옴
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -81,7 +85,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'gilnabi_db',      # 1단계에서 만든 데이터베이스 이름
         'USER': 'postgres',         # PostgreSQL 설치 시 설정한 사용자 이름
-        'PASSWORD': 'qwer1234',# PostgreSQL 설치 시 설정한 비밀번호
+        'PASSWORD': os.getenv('DATABASE_PASSWORD'),     # PostgreSQL 설치 시 설정한 비밀번호
         'HOST': 'localhost',        # 보통 localhost 또는 127.0.0.1 입니다.
         'PORT': '5432',             # PostgreSQL 기본 포트
     }

@@ -6,6 +6,7 @@ from .serializers import AccessibilitySerializer
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from django.contrib.postgres.search import TrigramSimilarity # 유사성 검색 도구
 from django_filters.rest_framework import DjangoFilterBackend
+import os
 
 # List / Create API
 class AccessibilityListAPI(ListCreateAPIView):
@@ -34,11 +35,14 @@ class AccessibilityDetailAPI(RetrieveUpdateDestroyAPIView):
     serializer_class = AccessibilitySerializer
     # 👇 URL의 'pk' 변수가 우리 모델의 'id' 필드를 가리킨다고 명시
     lookup_field = 'id'
+
+
 def show_map(request):
     places_queryset = Accessibility.objects.all()
     serializer = AccessibilitySerializer(places_queryset, many=True)
     context = {
         'places': serializer.data,
+        'kakao_map_key': os.getenv('KAKAO_MAP_KEY')
     }
     
     return render(request, 'map.html', context)

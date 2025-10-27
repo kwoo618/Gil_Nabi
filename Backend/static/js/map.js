@@ -1,6 +1,10 @@
 // kakao.maps.load(): 카카오맵 SDK 로딩 및 초기화가 완료되면 이 함수 안의 코드를 실행합니다.
 kakao.maps.load(function() {
 
+    // --- ✨ 검색 반경 설정 변수 ---
+    const NEARBY_SEARCH_RADIUS = 5; // 주변 검색 반경 (단위: 미터)
+    const KEYWORD_SEARCH_RADIUS = 500; // 키워드+좌표 검색 시 반경
+
     // --- 지도 생성 기본 설정 ---
     const container = document.getElementById('map');
     const options = {
@@ -97,7 +101,7 @@ kakao.maps.load(function() {
         const searchOptions = {}; // 카테고리 필터 제거
         if (centerLatLng) {
             searchOptions.location = centerLatLng;
-            searchOptions.radius = 5000; // 이름 검색 시 반경 넓게
+            searchOptions.radius = KEYWORD_SEARCH_RADIUS;
             searchOptions.sort = kakao.maps.services.SortBy.DISTANCE;
         }
 
@@ -127,7 +131,7 @@ kakao.maps.load(function() {
                          reject(status);
                      }
                 }
-            }, { location: coords, radius: 200, sort: kakao.maps.services.SortBy.DISTANCE });
+            }, { location: coords, radius: NEARBY_SEARCH_RADIUS, sort: kakao.maps.services.SortBy.DISTANCE });
         });
     }
 

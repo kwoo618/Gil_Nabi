@@ -8,7 +8,7 @@ __pycache__/
 # Django 임시 데이터베이스
 db.sqlite3
 
-# 나중에 만들 비밀 설정 파일
+# 비밀 설정 파일
 .env
 
 # VSCode 설정 폴더
