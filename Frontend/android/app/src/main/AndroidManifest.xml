@@ -10,6 +10,12 @@
       android:allowBackup="false"
       android:theme="@style/AppTheme"
       android:supportsRtl="true">
+
+      <!-- 카카오 SDK 앱 키 (직접 추가해야됨) -->
+      <meta-data
+          android:name="com.kakao.sdk.AppKey"
+          android:value="cb99ba5c4a37467b373ca6ab21a7886e"/>
+
       <activity
         android:name=".MainActivity"
         android:label="@string/app_name"
