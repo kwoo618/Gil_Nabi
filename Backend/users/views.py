@@ -55,7 +55,6 @@ class SocialLoginView(APIView):
             counter += 1 
         # 사용자 정보 DB 저장
 
-
         # DB에 사용자 정보 저장 (없으면 새로 생성)
             # DB에 이미 있는 사용자 조회 
         user, created = User.objects.get_or_create(
@@ -63,12 +62,24 @@ class SocialLoginView(APIView):
             provider=provider,      # 카카오 or 구글
             defaults={'username': username, 'profile_image': profile_image} # 없으면 생성
         )
-
         # 최종 사용자 정보 반환 
             # 클라이언트에 반환할 시리얼라이징
         data = UserSerializer(user).data # User 객체 -> JSON 변환
         return Response(data, status=status.HTTP_200_OK) # 200 OK 응답
 
+class CompleteProfileView(APIView):
+    def post(self, request):
+        # 프로필 완성 로직
+        user_id = request.data.get('user_id')
+        nickname = request.data.get('nickname')
+        profile_image = request.data.get('profile_image')
+        
+        # 여기에 사용자 프로필 업데이트 로직 추가
+        
+        return Response({
+            'message': '프로필 완성 성공',
+            'user_id': user_id
+        }, status=status.HTTP_200_OK)
 # 요약 흐름
 # 1. 클라이언트가 소셜 로그인 토큰과 제공자(kakao/google) 전송
 # 2. 서버가 토큰 검증 및 소셜 API 호출로 사용자 정보 조회

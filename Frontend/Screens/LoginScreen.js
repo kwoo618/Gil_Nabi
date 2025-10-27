@@ -10,7 +10,10 @@ import {
   Image,
 } from 'react-native';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
-import { login, getProfile } from '@react-native-seoul/kakao-login';
+import { login,
+  getProfile,
+  isKakaoTalkLoginAvailable // 카카오톡이 깔려있는지 확인.
+} from '@react-native-seoul/kakao-login';
 import axios from 'axios';
 
 export default function LoginScreen({ navigation }) {
@@ -34,7 +37,7 @@ export default function LoginScreen({ navigation }) {
       const token = (await GoogleSignin.getTokens()).accessToken;
 
       console.log('3. Django 서버 호출...');
-      const response = await axios.post('http://10.0.2.2:8000/users/social-login/', {
+      const response = await axios.post('http://10.0.2.2:8000/users/auth/social-login/', {
         provider: 'google',
         access_token: token,
       });
@@ -56,11 +59,35 @@ export default function LoginScreen({ navigation }) {
     }
   };
 
+  // 구글 스토어에서 카카오톡 열기
+  const openKakaoStore = () => {
+    const storeUrl = Platform.select({
+      ios: 'https://apps.apple.com/app/id362057947',
+      android: 'market://details?id=com.kakao.talk',
+    });
+    
+    Linking.openURL(storeUrl).catch((err) => {
+      // 플레이 스토어 앱이 없으면 브라우저로 열기
+      const webUrl = 'https://play.google.com/store/apps/details?id=com.kakao.talk';
+      Linking.openURL(webUrl);
+    });
+  };
+
   // 카카오 로그인
   const handleKakaoLogin = async () => {
     try {
       console.log('=== 카카오 로그인 시작 ===');
-      
+
+      const isAvailable = await isKakaoTalkLoginAvailable();
+      console.log('카카오톡 설치 여부:', isAvailable);
+
+      if (!isAvailable) {
+        Alert.alert('알림', '카카오톡이 설치되어 있지 않습니다.');
+        openKakaoStore();
+        return;
+      }
+
+      // 카카오톡 앱으로 로그인
       const token = await login();
       console.log('1. 토큰 받음:', token);
 
@@ -69,7 +96,7 @@ export default function LoginScreen({ navigation }) {
 
       console.log('3. Django 서버 호출...');
       const response = await axios.post(
-        'http://10.0.2.2:8000/users/social-login/',
+        'http://10.0.2.2:8000/users/auth/social-login/',
         {
           provider: 'kakao',
           access_token: token.accessToken,

@@ -7,8 +7,9 @@
 # 클라이언트가 어떤 URL로 요청하면 어떤 View가 처리할지 정의
 
 from django.urls import path
-from .views import SocialLoginView
+from .views import SocialLoginView, CompleteProfileView # LoginView : 소셜 로그인 처리 뷰, CompleteProfileView : 프로필 완성 뷰
 
 urlpatterns = [
     path('auth/social-login/', SocialLoginView.as_view(), name='social-login'),
+    path('auth/complete-profile/', CompleteProfileView.as_view(), name='complete-profile'),
 ]
