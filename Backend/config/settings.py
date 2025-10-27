@@ -82,12 +82,21 @@ WSGI_APPLICATION = "config.wsgi.application"
 
 DATABASES = {
     'default': {
+<<<<<<< HEAD
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'gilnabi_db',      # 1단계에서 만든 데이터베이스 이름
         'USER': 'postgres',         # PostgreSQL 설치 시 설정한 사용자 이름
         'PASSWORD': os.getenv('DATABASE_PASSWORD'),     # PostgreSQL 설치 시 설정한 비밀번호
         'HOST': 'localhost',        # 보통 localhost 또는 127.0.0.1 입니다.
         'PORT': '5432',             # PostgreSQL 기본 포트
+=======
+        'ENGINE': 'django.db.backends.postgresql',   # PostgreSQL 사용
+        'NAME': 'gilnabi_db',                          # 데이터베이스 이름
+        'USER': 'postgres',                          # DB 사용자
+        'PASSWORD': 'qwer1234',                      # DB 비밀번호
+        'HOST': 'localhost',                         # DB 서버 주소
+        'PORT': '5432',                              # DB 포트
+>>>>>>> ac8b761b633b974b8046fcf910b9027598498110
     }
 }
 

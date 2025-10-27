@@ -1,4 +1,10 @@
 #요청/응답 로직 작성
+<<<<<<< HEAD
+=======
+#HTTP 요청 처리 (API 엔드포인트)
+=======
+>>>>>>> f0d9ca87a04010bdc1ed6ce86a412fa2f9ef480c
+>>>>>>> ac8b761b633b974b8046fcf910b9027598498110
 from django.shortcuts import render
 from django.views.decorators.csrf import ensure_csrf_cookie
 from .models import Accessibility

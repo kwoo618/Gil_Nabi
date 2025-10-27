@@ -1,4 +1,10 @@
 #서버 실행 관련 설정
+<<<<<<< HEAD
+=======
+#WSGI 서버 실행용 (배포용)
+=======
+>>>>>>> f0d9ca87a04010bdc1ed6ce86a412fa2f9ef480c
+>>>>>>> ac8b761b633b974b8046fcf910b9027598498110
 """
 WSGI config for config project.
 
