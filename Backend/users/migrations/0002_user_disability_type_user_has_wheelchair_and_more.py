@@ -13,7 +13,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='user',
             name='disability_type',
-            field=models.CharField(blank=True, choices=[('physical', '지체장애'), ('visual', '시각장애'), ('hearing', '청각장애'), ('other', '기타')], max_length=20, null=True),
+            field=models.CharField(blank=True, choices=[('physical', '지체장애'), ('visual', '시각장애'), ('hearing', '청각장애'), ('language', '언어장애')], max_length=20, null=True),
         ),
         migrations.AddField(
             model_name='user',

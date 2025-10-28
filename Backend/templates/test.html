@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>OAuth 로그인 테스트</title>
+  <script src="https://developers.kakao.com/sdk/js/kakao.js"></script>
+  <script>
+    // 카카오 SDK 초기화
+    Kakao.init('fdf55cb627b110f41c5800bb8521a644'); // 여기 REST API 키 X, JS 키 사용
+    console.log(Kakao.isInitialized());
+    
+    function kakaoLogin() {
+      Kakao.Auth.authorize({
+        redirectUri: 'http://localhost:8000/users/auth/social-login/' // 백엔드에서 처리
+      });
+    }
+    
+    function googleLogin() {
+      // 구글 OAuth 링크 예시
+      const clientId = '847051237257-t1q2tmripa4up0o568iguvd1vmpiqhsu.apps.googleusercontent.com';
+      const redirectUri = 'http://localhost:8000/users/auth/social-login/google/';
+      const scope = 'profile email';
+      const url = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=${scope}`;
+      window.location.href = url;
+    }
+  </script>
+</head>
+<body>
+  <h1>OAuth 로그인 테스트</h1>
+  <button onclick="kakaoLogin()">카카오 로그인</button>
+  <button onclick="googleLogin()">구글 로그인</button>
+</body>
+</html>
