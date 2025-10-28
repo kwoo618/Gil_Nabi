@@ -85,6 +85,9 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
         versionName "1.0"
+
+        // ✅ 카카오 네이티브 앱 키
+        manifestPlaceholders = [kakaoAppKey: "cb99ba5c4a37467b373ca6ab21a7886e"]
     }
     signingConfigs {
         debug {
@@ -113,15 +116,13 @@ dependencies {
     implementation("com.facebook.react:react-android")
 
     // 카카오 SDK 추가  자동으로 포함되므로 주석 처리
-    // implementation 'com.kakao.sdk:v2-user:2.20.1'
+    implementation("com.kakao.sdk:v2-user:2.20.6")
 
     // 구글 SDK 추가 
     implementation platform('com.google.firebase:firebase-bom:34.4.0')
     implementation 'com.google.firebase:firebase-auth'
     // Google Sign-In 라이브러리 추가되어 있는지 확인
     implementation 'com.google.android.gms:play-services-auth:21.0.0'
-
-    // manifestPlaceholders = [kakaoAppKey: "여기에네이티브앱키"] // 카카오 네이티브 앱 키 추가
 
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-android")
