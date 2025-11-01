@@ -6,8 +6,10 @@ from django.views.generic import TemplateView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('users/', include('users.urls')),  # users 앱의 URL 포함
+    path('users/', include('users.urls')),  # Users 앱의 URL 포함
+    path('api/reviews/', include('reviews.urls')), # Reviews 앱의 URL 포함
     path('', TemplateView.as_view(template_name='login.html'), name='home'),   
+    path('reviews.html', TemplateView.as_view(template_name='reviews.html'), name='review_page'),
     path('login.html', TemplateView.as_view(template_name='login.html'), name='login_page'),
     path('signup.html', TemplateView.as_view(template_name='signup.html'), name='signup_page'),
     path('success.html', TemplateView.as_view(template_name='success.html'), name='success_page'), 

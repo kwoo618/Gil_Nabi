@@ -132,8 +132,8 @@
             </div>
         </div>
         
-        <button class="btn btn-primary" onclick="goToMain()">메인으로 이동</button>
-        <button class="btn btn-secondary" onclick="goToLogin()">로그인 페이지로</button>
+        <button class="btn btn-primary" onclick="goToReviews()">리뷰 작성하러 가기</button>
+        <button class="btn btn-secondary" onclick="goToMain()">메인으로 이동</button>
     </div>
 
     <script>
@@ -158,12 +158,16 @@
         
         function goToMain() {
             alert('메인 페이지로 이동합니다!');
-            // 실제 메인 페이지 URL로 변경
-            // window.location.href = '/main';
+            window.location.href = '/';
         }
         
         function goToLogin() {
-            window.location.href = 'login.html';
+            window.location.href = 'login.html?user_id=' + userId;
+        }
+
+        function goToReviews() {
+            // userId를 전달하여 리뷰 페이지로 이동
+            window.location.href = 'reviews.html?user_id=' + userId;
         }
     </script>
 </body>

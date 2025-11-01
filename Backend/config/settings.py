@@ -48,7 +48,8 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "corsheaders", # CORS 허용을 위한 앱
     "rest_framework",
-    "users"
+    "users",
+    'reviews'
 ]
 
 AUTH_USER_MODEL = "users.User"  # '앱이름.모델이름' 형식
@@ -64,8 +65,14 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-CORS_ALLOW_ALL_ORIGINS = True  # 개발 중에만 사용 (배포 시 제거)
-# 뜻 ->  "모든 출처에서 오는 요청 허용해!"
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [], # 테스트용. 나중에 JWT + redis 조합으로 구축
+    'DEFAULT_PERMISSION_CLASSES': [], # 테스트용. 나중에 JWT + redis 조합으로 구축
+}
+
+CORS_ALLOW_CREDENTIALS = True # 세션 쿠키 전송 허용
+
+CORS_ALLOW_ALL_ORIGINS = True  # 개발 중에만 사용 (배포 시 제거) 
 
 ROOT_URLCONF = "config.urls"
 

@@ -1,7 +1,0 @@
-# pack-refs with: peeled fully-peeled sorted 
-fa35c11bc0c6aa7f25a1a89880b8b3d5ae840690 refs/heads/Dongcheol_Backend
-7f42c0f416632327e292d07ecbf98c9314bdd6fe refs/heads/Dongcheol_Frontend
-82667f8f90c80143b4a520ff84dbb62d9c6b9191 refs/heads/feature/backend
-f2d7fe50a65baead46e62faa7343675ff90c2346 refs/heads/feature/map-data
-f2d7fe50a65baead46e62faa7343675ff90c2346 refs/heads/feature/map-interaction
-c2e96d788435f7257c77167dcd5e1ab2bb2c4837 refs/heads/main
