@@ -47,7 +47,7 @@ class UserManager(BaseUserManager): # User 객체를 DB에 생성/관리하는 �
         user.save(using=self._db) # DB에 사용자 저장
 
         if password:
-            user.set_password(password)  # ✅ 있어야 함!
+            user.set_password(password)  # 있어야 함!
         else:
             user.set_unusable_password()
             
@@ -77,8 +77,8 @@ class UserManager(BaseUserManager): # User 객체를 DB에 생성/관리하는 �
 class User(AbstractBaseUser, PermissionsMixin): # AbstractBaseUser: 기본 로그인 기능, PermissionsMixin: 권한 시스템 제공
     SOCIAL_PROVIDERS = ( # 소셜 로그인 제공자 선택지 (DB 컬럼에서 choices로 제한 가능)
         ('kakao', 'Kakao'), 
-        ('google', 'Google'),
-    )
+        ('google', 'Google'), 
+    ) 
     
     # ============== 필수 입력 필드 ========================================
     social_id = models.CharField(
@@ -122,7 +122,6 @@ class User(AbstractBaseUser, PermissionsMixin): # AbstractBaseUser: 기본 로�
         ('physical', '지체장애'),
         ('visual', '시각장애'),
         ('hearing', '청각장애'),
-        ('language', '언어장애'),
     ]
     disability_type = models.CharField(
         max_length=20, 

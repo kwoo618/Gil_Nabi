@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "corsheaders", # CORS 허용을 위한 앱
+    "rest_framework",
     "users"
 ]
 
@@ -71,7 +72,7 @@ ROOT_URLCONF = "config.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        'DIRS': [BASE_DIR / 'templates'],  # 테스트용 test.html  위치
+        'DIRS': [BASE_DIR / 'test'],  # 테스트용 html 파일 위치
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -136,6 +137,9 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = "static/"
+STATICFILES_DIRS = [
+    BASE_DIR / 'test',
+]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field

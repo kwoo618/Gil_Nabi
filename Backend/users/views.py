@@ -6,13 +6,15 @@
 from rest_framework.views import APIView # API 요청 처리용 클래스 
 from rest_framework.response import Response # API 응답용 클래스 (JSON 응답 생성)
 from rest_framework import status # HTTP 상태 코드
+from django.shortcuts import redirect
+from django.http import JsonResponse
 
 # 시리얼라이저 가져오기 
 from .serializers import SocialLoginSerializer, UserSerializer
 from .models import User # User 모델 가져오기
 import requests # 파이썬에서 다른 서버 API에 HTTP 요청 보낼 때 사용 (ex. 파이썬용 브라우저)
 
-# 로그인 API 클래스 
+# 로그인 API 클래스
 class SocialLoginView(APIView):
     # APIView 상속 -> POST, GET 같은 HTTP 요청 처리 가능
     # 클래스 내부에서 POST 메서드 정의 -> 로그인 요청 처리
@@ -62,28 +64,147 @@ class SocialLoginView(APIView):
             provider=provider,      # 카카오 or 구글
             defaults={'username': username, 'profile_image': profile_image} # 없으면 생성
         )
-        # 최종 사용자 정보 반환 
+        # 최종 사용자 정보 반환
             # 클라이언트에 반환할 시리얼라이징
         data = UserSerializer(user).data # User 객체 -> JSON 변환
         return Response(data, status=status.HTTP_200_OK) # 200 OK 응답
+    
+    def get(self, request):
+        code = request.GET.get('code')
+        provider = request.GET.get('provider', 'kakao') # 카카오 or 구글
+
+        # 에러처리
+        if not code:
+            return Response(
+                {'error': '인가 코드가 없음'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+
+        # 카카오 로그인일 경우 
+        if provider == 'kakao':
+            token_response = requests.post(  
+                'https://kauth.kakao.com/oauth/token',  
+                data={  # !!! 배포할때는 키값들 env로 변경해서 호출 !!!
+                    'grant_type': 'authorization_code',
+                    'client_id': 'bd7ae62c24fac01bfab454069702580f',  # 카카오 REST API
+                    'redirect_uri': 'http://localhost:8000/users/auth/login/',  # 카카오 리다이렉트 URI
+                    'code': code,
+                }
+            )
+
+            token_json = token_response.json()
+
+            # 🔴 디버깅: 토큰 응답 출력
+            print("=== 카카오 토큰 응답 ===")
+            print(token_json)
+            print("=====================")
+
+            # 에러처리 
+            if 'error' in token_json:
+                return Response(  
+                    {'error': '토큰 발급 실패', 'detail': token_json, 'code_received': code},  
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            access_token = token_json['access_token']
+
+            # 액세스 토큰으로 사용자 정보 가져오기 
+            user_info = requests.get(  
+                'https://kapi.kakao.com/v2/user/me',
+                headers={'Authorization': f'Bearer {access_token}'}
+            ).json()
+
+            social_id = str(user_info['id'])
+            username = user_info.get('kakao_account', {}).get('profile', {}).get('nickname', 'KakaoUser')
+            profile_image = user_info.get('kakao_account', {}).get('profile', {}).get('profile_image_url')
+
+        elif provider == 'google':  
+            token_response = requests.post(  
+                'https://oauth2.googleapis.com/token',
+                data={
+                    'grant_type': 'authorization_code',
+                    'client_id': 'YOUR_GOOGLE_CLIENT_ID',  # 구글 클라이언트 ID로 교체
+                    'client_secret': 'YOUR_GOOGLE_CLIENT_SECRET',  # 구글 클라이언트 시크릿으로 교체
+                    'redirect_uri': 'http://localhost:8000/users/auth/social-login/',  # 리다이렉트 URI
+                    'code': code,
+                }
+            )
+            token_json = token_response.json()
+        
+            if 'error' in token_json:
+                return Response(
+                    {'error': '구글 토큰 발급 실패', 'detail': token_json}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        
+            access_token = token_json['access_token']  
+        
+            # 2. 액세스 토큰으로 사용자 정보 가져오기
+            user_info = requests.get(
+                'https://www.googleapis.com/oauth2/v2/userinfo',
+                headers={'Authorization': f'Bearer {access_token}'}
+            ).json()
+        
+            social_id = user_info.get('id')
+            username = user_info.get('name', 'GoogleUser')
+            profile_image = user_info.get('picture')
+
+        else:
+            return Response(
+                {'error': '지원하지 않는 provider입니다'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # 닉네임 중복 처리
+        original_username = username
+        counter = 1
+        while User.objects.filter(username=username).exists():
+            username = f"{original_username}_{counter}"
+            counter += 1
+        
+        # 사용자 생성 또는 조회
+        user, created = User.objects.get_or_create(
+            social_id=social_id,
+            provider=provider,
+            defaults={'username': username, 'profile_image': profile_image}
+        )
+        
+        # 응답 방식 선택
+        # 옵션 1: 프론트엔드로 리다이렉트 (React 등 사용 시)
+        return redirect(f'/signup.html?user_id={user.id}')
 
 class CompleteProfileView(APIView):
     def post(self, request):
-        # 프로필 완성 로직
         user_id = request.data.get('user_id')
         nickname = request.data.get('nickname')
-        profile_image = request.data.get('profile_image')
+        disability_type = request.data.get('disability_type')
+        has_wheelchair = request.data.get('has_wheelchair')
         
-        # 여기에 사용자 프로필 업데이트 로직 추가
-        
-        return Response({
-            'message': '프로필 완성 성공',
-            'user_id': user_id
-        }, status=status.HTTP_200_OK)
-# 요약 흐름
-# 1. 클라이언트가 소셜 로그인 토큰과 제공자(kakao/google) 전송
-# 2. 서버가 토큰 검증 및 소셜 API 호출로 사용자 정보 조회
-# 3. 사용자 정보를 DB에 저장 (없으면 새로 생성)
-# 3-1. 닉네임 중복 시 뒤에 숫자 붙여서 고유하게 만듦
-# 4. 최종 사용자 정보를 클라이언트에 반환
-# 5. 클라이언트는 이 정보를 받아서 앱 내에서 로그인 상태 유지
+        try:
+            user = User.objects.get(id=user_id)
+            user.nickname = nickname
+            user.disability_type = disability_type
+            user.has_wheelchair = has_wheelchair
+            user.is_profile_complete = True
+            user.save()
+            
+            return Response({
+                'message': '프로필 완성 성공',
+                'user_id': user_id
+            }, status=status.HTTP_200_OK)
+        except User.DoesNotExist:
+            return Response({
+                'error': '사용자를 찾을 수 없습니다'
+            }, status=status.HTTP_404_NOT_FOUND)
+
+class HomeView(APIView):
+    def get(self, request):
+        return Response ({
+            'message': '로그인 API 서버',
+            'endpoints' : {
+                'kakao_login': '/users/auth/login/?provider=kakao',
+                'google_login': '/users/auth/login/?provider=google',
+                'complete_profile': '/users/auth/login/signup/'
+            }
+        })
