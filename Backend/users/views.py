@@ -8,12 +8,17 @@ from rest_framework.response import Response # API 응답용 클래스 (JSON 응
 from rest_framework import status # HTTP 상태 코드
 from django.shortcuts import redirect
 from django.http import JsonResponse
-from rest_framework_simplejwt.tokens import RefreshToken # JWT 토큰 관리
+
+from dotenv import load_dotenv # .env로 비밀번호 넣고 호출해오는 기능 
+import os
+
 
 # 시리얼라이저 가져오기 
 from .serializers import SocialLoginSerializer, UserSerializer
 from .models import User # User 모델 가져오기
 import requests # 파이썬에서 다른 서버 API에 HTTP 요청 보낼 때 사용 (ex. 파이썬용 브라우저)
+
+load_dotenv()
 
 # 로그인 API 클래스
 class SocialLoginView(APIView):
@@ -49,14 +54,6 @@ class SocialLoginView(APIView):
             social_id = user_info.get('id') # 구글 고유 ID
             username = user_info.get('name', 'GoogleUser') # 닉네임, 없으면 기본값 "GoogleUser"
             profile_image = user_info.get('picture') # 프로필 이미지 URL
-
-        # 닉네임 중복 처리 (DB에 이미 있는 닉네임이면 뒤에 숫자 붙이기)
-        original_username = username
-        counter = 1
-        while User.objects.filter(username=username).exists():
-            username = f"{original_username}_{counter}"
-            counter += 1 
-        # 사용자 정보 DB 저장
 
         # DB에 사용자 정보 저장 (없으면 새로 생성)
             # DB에 이미 있는 사용자 조회 
@@ -95,7 +92,7 @@ class SocialLoginView(APIView):
                 'https://kauth.kakao.com/oauth/token',  
                 data={  # !!! 배포할때는 키값들 env로 변경해서 호출 !!!
                     'grant_type': 'authorization_code',
-                    'client_id': 'bd7ae62c24fac01bfab454069702580f',  # 카카오 REST API
+                    'client_id': os.getenv('KAKAO_CLIENT_ID'),  # 카카오 REST API
                     'redirect_uri': 'http://localhost:8000/users/auth/login/',  # 카카오 리다이렉트 URI
                     'code': code,
                 }
@@ -127,9 +124,9 @@ class SocialLoginView(APIView):
                 'https://oauth2.googleapis.com/token',
                 data={
                     'grant_type': 'authorization_code',
-                    'client_id': 'YOUR_GOOGLE_CLIENT_ID',  # 구글 클라이언트 ID로 교체
-                    'client_secret': 'YOUR_GOOGLE_CLIENT_SECRET',  # 구글 클라이언트 시크릿으로 교체
-                    'redirect_uri': 'http://localhost:8000/users/auth/social-login/',  # 리다이렉트 URI
+                    'client_id': os.getenv('GOOGLE_CLIENT_ID'),  # 구글 클라이언트 ID로 교체
+                    'client_secret': os.getenv('GOOGLE_CLIENT_SECRET'),  # 구글 클라이언트 시크릿으로 교체
+                    'redirect_uri': 'http://localhost:8000/users/auth/login/',  # 리다이렉트 URI
                     'code': code,
                 }
             )
@@ -159,13 +156,6 @@ class SocialLoginView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # 닉네임 중복 처리
-        original_username = username
-        counter = 1
-        while User.objects.filter(username=username).exists():
-            username = f"{original_username}_{counter}"
-            counter += 1
-        
         # 사용자 생성 또는 조회
         user, created = User.objects.get_or_create(
             social_id=social_id,
@@ -183,6 +173,13 @@ class CompleteProfileView(APIView):
         nickname = request.data.get('nickname')
         disability_type = request.data.get('disability_type')
         has_wheelchair = request.data.get('has_wheelchair')
+        
+        # 닉네임 중복 체크
+        if User.objects.filter(nickname=nickname).exists():
+            return Response({
+                'error': '닉네임이 중복입니다',
+                'message': '다른 닉네임을 입력해주세요'
+            }, status=status.HTTP_400_BAD_REQUEST)
         
         try:
             user = User.objects.get(id=user_id)
