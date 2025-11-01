@@ -190,7 +190,6 @@
                     <button type="button" class="option-btn" data-value="visual">시각 장애 👁️</button>
                     <button type="button" class="option-btn" data-value="hearing">청각 장애 👂</button>
                     <button type="button" class="option-btn" data-value="physical">지체 장애 🦾</button>
-                    <button type="button" class="option-btn" data-value="speech">언어 장애 💬</button>
                 </div>
                 <input type="hidden" id="disabilityType" required>
             </div>
@@ -272,7 +271,7 @@
                 user_id: userId,
                 nickname: nicknameInput.value.trim(),
                 disability_type: disabilityInput.value,
-                wheelchair: wheelchairInput.value === 'true'
+                has_wheelchair: wheelchairInput.value === 'true'
             };
             
             console.log('제출할 데이터:', formData);

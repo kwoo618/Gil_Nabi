@@ -8,6 +8,7 @@ from rest_framework.response import Response # API 응답용 클래스 (JSON 응
 from rest_framework import status # HTTP 상태 코드
 from django.shortcuts import redirect
 from django.http import JsonResponse
+from rest_framework_simplejwt.tokens import RefreshToken # JWT 토큰 관리
 
 # 시리얼라이저 가져오기 
 from .serializers import SocialLoginSerializer, UserSerializer
@@ -64,14 +65,21 @@ class SocialLoginView(APIView):
             provider=provider,      # 카카오 or 구글
             defaults={'username': username, 'profile_image': profile_image} # 없으면 생성
         )
-        # 최종 사용자 정보 반환
-            # 클라이언트에 반환할 시리얼라이징
-        data = UserSerializer(user).data # User 객체 -> JSON 변환
-        return Response(data, status=status.HTTP_200_OK) # 200 OK 응답
+        
+        refresh = RefreshToken.for_user(user)
+
+        return Response({
+            'message': '로그인 성공',
+            'user': UserSerializer(user).data,
+            'tokens': {
+                'access': str(refresh.access_token), # 액세스 토큰
+                'refresh': str(refresh), # 리프레쉬 토큰
+            }
+        }, status = status.HTTP_200_OK)
     
     def get(self, request):
         code = request.GET.get('code')
-        provider = request.GET.get('provider', 'kakao') # 카카오 or 구글
+        provider = request.GET.get('state', 'kakao') # 카카오 or 구글
 
         # 에러처리
         if not code:
@@ -94,11 +102,6 @@ class SocialLoginView(APIView):
             )
 
             token_json = token_response.json()
-
-            # 🔴 디버깅: 토큰 응답 출력
-            print("=== 카카오 토큰 응답 ===")
-            print(token_json)
-            print("=====================")
 
             # 에러처리 
             if 'error' in token_json:
