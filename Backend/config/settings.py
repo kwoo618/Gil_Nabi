@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -47,6 +48,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "corsheaders", # CORS 허용을 위한 앱
+    "rest_framework_simplejwt", # JWT 
     "rest_framework",
     "users",
     'reviews'
@@ -66,8 +68,34 @@ MIDDLEWARE = [
 ]
 
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': [], # 테스트용. 나중에 JWT + redis 조합으로 구축
-    'DEFAULT_PERMISSION_CLASSES': [], # 테스트용. 나중에 JWT + redis 조합으로 구축
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication' # JWT
+    ], 
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated' # 기본적으로 인증이 필요
+    ], 
+}
+
+# JWT 상세 설정
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),  # Access Token 30분
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),     # Refresh Token 7일
+    'ROTATE_REFRESH_TOKENS': True,  # Refresh Token 갱신 시 새로 발급
+    'BLACKLIST_AFTER_ROTATION': True,  # 기존 Refresh Token 블랙리스트 처리
+    'AUTH_HEADER_TYPES': ('Bearer',),
+    'USER_ID_FIELD': 'id',
+    'USER_ID_CLAIM': 'user_id',
+}
+
+# Redis 설정 (Refresh Token 저장용)
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': 'redis://127.0.0.1:6379/1',  # Redis 서버 주소
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        }
+    }
 }
 
 CORS_ALLOW_CREDENTIALS = True # 세션 쿠키 전송 허용

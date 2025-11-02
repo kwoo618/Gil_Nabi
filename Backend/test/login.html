@@ -5,28 +5,194 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>소셜 로그인 테스트</title>
     <style>
-        /* CSS 생략 */
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 500px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .container {
+            text-align: center;
+        }
+        .login-btn {
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .kakao-btn {
+            background-color: #FEE500;
+            color: #000;
+        }
+        .google-btn {
+            background-color: #4285f4;
+            color: #fff;
+        }
+        .user-info {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f5f5f5;
+            border-radius: 10px;
+        }
+        .logout-btn {
+            background-color: #ff4444;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .hidden {
+            display: none;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>길나비 🦋</h1>
-        <p>소셜 로그인으로 시작하기</p>
         
-        <button class="login-btn kakao-btn" onclick="kakaoLogin()">
-            카카오 로그인
-        </button>
-        
-        <button class="login-btn google-btn" onclick="googleLogin()">
-            구글 로그인
-        </button>
+        <div id="loginSection">
+            <p>소셜 로그인으로 시작하기</p>
+            <button class="login-btn kakao-btn" onclick="kakaoLogin()">
+                카카오 로그인
+            </button>
+            
+            <button class="login-btn google-btn" onclick="googleLogin()">
+                구글 로그인
+            </button>
+        </div>
+
+        <div id="userSection" class="user-info hidden">
+            <h3>로그인됨 ✅</h3>
+            <p id="userName"></p>
+            <p style="font-size: 12px; color: #666;">
+                Token: <span id="token"></span>
+            </p>
+            <button class="logout-btn" onclick="logout()">
+                로그아웃
+            </button>
+        </div>
     </div>
 
     <script>
-        // ✅ 설정값
         const KAKAO_CLIENT_ID = 'bd7ae62c24fac01bfab454069702580f';
         const GOOGLE_CLIENT_ID = '847051237257-fnieo1f299k2bob0av16pj5d7pbcfrth.apps.googleusercontent.com';
         const REDIRECT_URI = 'http://localhost:8000/users/auth/login/';
+        const API_BASE_URL = 'http://localhost:8000';
+        
+        // 페이지 로드 시 로그인 상태 확인
+        window.onload = function() {
+            checkLoginStatus();
+        };
+        
+        // 로그인 상태 확인
+        async function checkLoginStatus() {
+            const token = localStorage.getItem('access_token');
+            
+            if (token) {
+                try {
+                    const response = await fetch(`${API_BASE_URL}/users/profile/`, {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        showLoggedIn(data);
+                    } else {
+                        // 토큰 만료 또는 유효하지 않음
+                        await refreshToken();
+                    }
+                } catch (error) {
+                    console.error('로그인 상태 확인 실패:', error);
+                    showLoggedOut();
+                }
+            } else {
+                showLoggedOut();
+            }
+        }
+        
+        // 로그인 UI 표시
+        function showLoggedIn(userData) {
+            document.getElementById('loginSection').classList.add('hidden');
+            document.getElementById('userSection').classList.remove('hidden');
+            document.getElementById('userName').textContent = `${userData.username} (${userData.provider})`;
+            const token = localStorage.getItem('access_token');
+            document.getElementById('token').textContent = token.substring(0, 20) + '...';
+        }
+        
+        // 로그아웃 UI 표시
+        function showLoggedOut() {
+            document.getElementById('loginSection').classList.remove('hidden');
+            document.getElementById('userSection').classList.add('hidden');
+        }
+        
+        // 토큰 갱신
+        async function refreshToken() {
+            const refresh = localStorage.getItem('refresh_token');
+            
+            if (!refresh) {
+                showLoggedOut();
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/users/auth/token/refresh/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        refresh_token: refresh
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    localStorage.setItem('access_token', data.access);
+                    console.log('✅ 토큰 갱신 성공');
+                    checkLoginStatus();
+                } else {
+                    showLoggedOut();
+                    localStorage.clear();
+                }
+            } catch (error) {
+                console.error('토큰 갱신 실패:', error);
+                showLoggedOut();
+                localStorage.clear();
+            }
+        }
+        
+        // 로그아웃
+        async function logout() {
+            const token = localStorage.getItem('access_token');
+            
+            if (token) {
+                try {
+                    await fetch(`${API_BASE_URL}/users/auth/logout/`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                    console.log('✅ 서버 로그아웃 성공');
+                } catch (error) {
+                    console.error('서버 로그아웃 실패:', error);
+                }
+            }
+            
+            // 로컬 스토리지 삭제
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('refresh_token');
+            
+            showLoggedOut();
+            alert('로그아웃 되었습니다');
+        }
         
         // 카카오 로그인
         function kakaoLogin() {
@@ -37,7 +203,6 @@
                 `&response_type=code` +
                 `&state=kakao`;
             
-            console.log('🟡 카카오 로그인 URL:', kakaoAuthUrl);
             window.location.href = kakaoAuthUrl;
         }
         
@@ -51,14 +216,8 @@
                 `&scope=openid%20email%20profile` +
                 `&state=google`;
             
-            console.log('🔵 구글 로그인 URL:', googleAuthUrl);
             window.location.href = googleAuthUrl;
         }
-        
-        // ✅ 초기화 확인
-        console.log('✅ 설정 로드 완료');
-        console.log('카카오 Client ID:', KAKAO_CLIENT_ID);
-        console.log('구글 Client ID:', GOOGLE_CLIENT_ID);
     </script>
 </body>
 </html>

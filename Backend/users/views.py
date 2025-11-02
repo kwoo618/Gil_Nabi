@@ -3,47 +3,48 @@
 # KaKao, Naver 소셜 로그인 API 호출 및 응답 처리
 
 # Django REST Framework에서 APIView와 응답 도구 가져오기 
-from rest_framework.views import APIView # API 요청 처리용 클래스 
-from rest_framework.response import Response # API 응답용 클래스 (JSON 응답 생성)
-from rest_framework import status # HTTP 상태 코드
+from rest_framework.views import APIView                    # API 요청 처리용 클래스 
+from rest_framework.response import Response                # API 응답용 클래스 (JSON 응답 생성)
+from rest_framework import status                           # HTTP 상태 코드
+from rest_framework_simplejwt.tokens import RefreshToken    # JWT 설정 
+from django.core.cache import cache                         # redis 설정
+from rest_framework.permissions import AllowAny, IsAuthenticated # 접근 권한 
 from django.shortcuts import redirect
 from django.http import JsonResponse
-
-from dotenv import load_dotenv # .env로 비밀번호 넣고 호출해오는 기능 
+from dotenv import load_dotenv                              # .env로 비밀번호 넣고 호출해오는 기능 
 import os
+import requests                                             # 파이썬에서 다른 서버 API에 HTTP 요청 보낼 때 사용 (ex. 파이썬용 브라우저)
 
 
 # 시리얼라이저 가져오기 
 from .serializers import SocialLoginSerializer, UserSerializer
-from .models import User # User 모델 가져오기
-import requests # 파이썬에서 다른 서버 API에 HTTP 요청 보낼 때 사용 (ex. 파이썬용 브라우저)
+from .models import User                                    # User 모델 가져오기
 
 load_dotenv()
 
 # 로그인 API 클래스
 class SocialLoginView(APIView):
     # APIView 상속 -> POST, GET 같은 HTTP 요청 처리 가능
-    # 클래스 내부에서 POST 메서드 정의 -> 로그인 요청 처리
-    """ KaKao or Google 액세스 토큰으로 로그인 처리 """ 
+    permission_classes = [AllowAny] # 로그인은 인증없이 접근 가능
 
     # post 메서드 정의 
     def post(self, request):
         # 클라이언트에서 보낸 데이터 가져오기
-        serializer = SocialLoginSerializer(data=request.data) # 요청 데이터로 시리얼라이저 객체 생성
-        serializer.is_valid(raise_exception=True) # 데이터 검증, 틀리면 자동 에러 반환 #.is_valid() -> True/False 반환
-        provider = serializer.validated_data['provider'] # kakao or google #
-        access_token = serializer.validated_data['access_token'] # 소셜 로그인 토큰
+        serializer = SocialLoginSerializer(data=request.data)       # 요청 데이터로 시리얼라이저 객체 생성
+        serializer.is_valid(raise_exception=True)                   # 데이터 검증, 틀리면 자동 에러 반환 #.is_valid() -> True/False 반환
+        provider = serializer.validated_data['provider']            # kakao or google #
+        access_token = serializer.validated_data['access_token']    # 소셜 로그인 토큰
 
         # 소셜 API 호출 
         # KaKao API 호출
         if provider == 'kakao':
             user_info = requests.get(
-                'https://kapi.kakao.com/v2/user/me', # KaKao 사용자 정보 API URL
+                'https://kapi.kakao.com/v2/user/me',                # KaKao 사용자 정보 API URL
                 headers={'Authorization': f'Bearer {access_token}'} # 요청 헤더에 토큰 정보를 담음
-            ).json() # 요청을 JSON으로 변환해서 파이썬 딕셔너리로 사용 가능.
-            social_id = str(user_info['id']) # 카카오 고유 ID
-            username = user_info.get('kakao_account', {}).get('profile', {}).get('nickname', 'KaKaoUser') # 닉네임, 없으면 기본값 "KaKaoUser"
-            profile_image = user_info.get('kakao_account', {}).get('profile', {}).get('profile_image_url') # 프로필 이미지 URL
+            ).json()                                                # 요청을 JSON으로 변환해서 파이썬 딕셔너리로 사용 가능.
+            social_id = str(user_info['id'])                        # 카카오 고유 ID
+            username = user_info.get('kakao_account', {}).get('profile', {}).get('nickname', 'KaKaoUser')   # 닉네임, 없으면 기본값 "KaKaoUser"
+            profile_image = user_info.get('kakao_account', {}).get('profile', {}).get('profile_image_url')  # 프로필 이미지 URL
 
         # Google API 호출
         elif provider == 'google':
@@ -51,26 +52,36 @@ class SocialLoginView(APIView):
                 'https://www.googleapis.com/oauth2/v2/userinfo',
                 headers={'Authorization': f'Bearer {access_token}'}
             ).json() # JSON 응답
-            social_id = user_info.get('id') # 구글 고유 ID
-            username = user_info.get('name', 'GoogleUser') # 닉네임, 없으면 기본값 "GoogleUser"
-            profile_image = user_info.get('picture') # 프로필 이미지 URL
+            social_id = user_info.get('id')                         # 구글 고유 ID
+            username = user_info.get('name', 'GoogleUser')          # 닉네임, 없으면 기본값 "GoogleUser"
+            profile_image = user_info.get('picture')                # 프로필 이미지 URL
 
         # DB에 사용자 정보 저장 (없으면 새로 생성)
             # DB에 이미 있는 사용자 조회 
         user, created = User.objects.get_or_create(
-            social_id=social_id,    # 검색 조건 (이미 있으면 조회)
-            provider=provider,      # 카카오 or 구글
+            social_id=social_id,                                    # 검색 조건 (이미 있으면 조회)
+            provider=provider,                                      # 카카오 or 구글
             defaults={'username': username, 'profile_image': profile_image} # 없으면 생성
         )
-        
+
+         # JWT 토큰 생성
         refresh = RefreshToken.for_user(user)
+        access_token = str(refresh.access_token)
+        refresh = str(refresh)
+
+        # Refresh Token을 Redis에 저장 (7일 만료)
+        cache.set(
+            f'refresh_token:{user.id}',
+            refresh_token,
+            timeout=60*60*24*7  # 7일
+        )
 
         return Response({
             'message': '로그인 성공',
             'user': UserSerializer(user).data,
             'tokens': {
-                'access': str(refresh.access_token), # 액세스 토큰
-                'refresh': str(refresh), # 리프레쉬 토큰
+                'access': access_token,             # 액세스 토큰
+                'refresh': refresh_token,           # 리프레쉬 토큰
             }
         }, status = status.HTTP_200_OK)
     
@@ -155,19 +166,34 @@ class SocialLoginView(APIView):
                 {'error': '지원하지 않는 provider입니다'}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
-
+        
         # 사용자 생성 또는 조회
         user, created = User.objects.get_or_create(
             social_id=social_id,
             provider=provider,
             defaults={'username': username, 'profile_image': profile_image}
         )
-        
-        # 응답 방식 선택
-        # 옵션 1: 프론트엔드로 리다이렉트 (React 등 사용 시)
-        return redirect(f'/signup.html?user_id={user.id}')
+
+        # JWT 토큰 생성
+        refresh = RefreshToken.for_user(user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+
+        # Redis에 저장
+        cache.set(
+            f'refresh_token:{user.id}',
+            refresh_token,
+            timeout=60*60*24*7
+        )
+        # 이미 가입했으면 리뷰 뷰로 바로 이동 
+        if user.is_profile_complete:
+            return redirect(f'/reviews.html?access_token={access_token}&refresh_token={refresh_token}&user_id={user.id}')
+        else :   # 아니면 회원가입 
+            return redirect(f'/signup.html?access_token={access_token}&refresh_token={refresh_token}&user_id={user.id}')
 
 class CompleteProfileView(APIView):
+    permission_classes = [AllowAny] # 로그인 전이라 접근 가능.
+
     def post(self, request):
         user_id = request.data.get('user_id')
         nickname = request.data.get('nickname')
@@ -198,13 +224,82 @@ class CompleteProfileView(APIView):
                 'error': '사용자를 찾을 수 없습니다'
             }, status=status.HTTP_404_NOT_FOUND)
 
+class LogoutView(APIView):
+    permission_classes = [IsAuthenticated] # 로그인 된 사용자만 접근 가능
+    def post(self, request):
+        try:
+            # Redis에서 Refresh Token 삭제
+            cache.delete(f'refresh_token:{request.user.id}')
+            
+            return Response({
+                'message': '로그아웃 성공'
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({
+                'error': '로그아웃 실패',
+                'detail': str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+class TokenRefreshView(APIView):
+    # 액세스 토큰 갱신 
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        refresh_token = request.data.get('refresh_token')
+        
+        if not refresh_token:       # 토큰이 없을때
+            return Response({
+                'error': 'Refresh Token이 필요합니다'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            # Refresh Token 검증
+            refresh = RefreshToken(refresh_token)
+            user_id = refresh['user_id']
+            
+            # Redis에서 저장된 토큰과 비교
+            stored_token = cache.get(f'refresh_token:{user_id}')
+            
+            if stored_token != refresh_token:
+                return Response({
+                    'error': '유효하지 않은 Refresh Token'
+                }, status=status.HTTP_401_UNAUTHORIZED)
+            
+            # 새 Access Token 발급
+            new_access_token = str(refresh.access_token)
+            
+            return Response({
+                'access': new_access_token
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response({
+                'error': 'Token 갱신 실패',
+                'detail': str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+class UserProfileView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        user = request.user
+        return Response({
+            'id': user.id,
+            'username': user.username,
+            'email': getattr(user, 'email', ''),
+            'profile_image': user.profile_image,
+        })
+
 class HomeView(APIView):
+    permission_classes = [AllowAny]     # 홈은 누구나 접근 가능
     def get(self, request):
         return Response ({
             'message': '로그인 API 서버',
             'endpoints' : {
                 'kakao_login': '/users/auth/login/?provider=kakao',
                 'google_login': '/users/auth/login/?provider=google',
-                'complete_profile': '/users/auth/login/signup/'
+                'complete_profile': '/users/auth/login/signup/',
+                'logout': '/users/auth/logout/',
+                'token_refresh': '/users/auth/token/refresh/'
             }
         })
