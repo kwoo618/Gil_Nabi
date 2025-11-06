@@ -47,11 +47,14 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    
     "corsheaders", # CORS 허용을 위한 앱
     "rest_framework_simplejwt", # JWT 
     "rest_framework",
+
     "users",
-    'reviews'
+    'reviews',
+    'community'
 ]
 
 AUTH_USER_MODEL = "users.User"  # '앱이름.모델이름' 형식
