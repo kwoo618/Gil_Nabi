@@ -6,6 +6,39 @@ from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIV
 from django.contrib.postgres.search import TrigramSimilarity # 유사성 검색 도구
 from django_filters.rest_framework import DjangoFilterBackend
 import os
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from .recommendation import RecommendationEngine
+
+class RecommendPlacesAPI(APIView):
+    def get(self, request):
+        """AI 기반 장소 추천"""
+        # 파라미터 받기
+        disability_type = request.query_params.get('disability_type', 'wheelchair')
+        top_n = int(request.query_params.get('limit', 10))
+        
+        # 추천 엔진 실행
+        engine = RecommendationEngine()
+        recommendations = engine.get_recommended_places(
+            user_disability_type=disability_type,
+            top_n=top_n
+        )
+        
+        # 상세 정보 포함해서 반환
+        result = []
+        for rec in recommendations:
+            place = Accessibility.objects.get(id=rec['place_id'])
+            place_data = AccessibilitySerializer(place).data
+            place_data['recommendation_score'] = rec['total_score']
+            place_data['score_components'] = rec['components']
+            result.append(place_data)
+        
+        return Response({
+            'success': True,
+            'count': len(result),
+            'disability_type': disability_type,
+            'recommendations': result
+        })
 
 # List / Create API
 class AccessibilityListAPI(ListCreateAPIView):
