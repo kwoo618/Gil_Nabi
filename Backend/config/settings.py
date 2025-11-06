@@ -22,7 +22,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-omg&!wk5hfzu67o2ezo^q=7nl^t2cr&ruwfy=tlyu-31huf#n4"
+SECRET_KEY = os.getenv('SECRET_KEY') # .env 파일에서 SECRET_KEY 값을 읽어옴
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -130,12 +130,12 @@ WSGI_APPLICATION = "config.wsgi.application"
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',   # PostgreSQL 사용
-        'NAME': 'gilnabi_db',                          # 데이터베이스 이름
-        'USER': 'postgres',                          # DB 사용자
-        'PASSWORD': 'qwer1234',                      # DB 비밀번호
-        'HOST': 'localhost',                         # DB 서버 주소
-        'PORT': '5432',                              # DB 포트
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'gilnabi_db',      # 1단계에서 만든 데이터베이스 이름
+        'USER': 'postgres',         # PostgreSQL 설치 시 설정한 사용자 이름
+        'PASSWORD': os.getenv('DATABASE_PASSWORD'),     # PostgreSQL 설치 시 설정한 비밀번호
+        'HOST': 'localhost',        # 보통 localhost 또는 127.0.0.1 입니다.
+        'PORT': '5432',             # PostgreSQL 기본 포트
     }
 }
 
@@ -177,6 +177,10 @@ USE_TZ = True
 STATIC_URL = "static/"
 STATICFILES_DIRS = [
     BASE_DIR / 'test',
+]
+
+STATICFILES_DIRS = [
+    BASE_DIR / "static", # Backend/static 폴더를 지정
 ]
 
 # Default primary key field type
