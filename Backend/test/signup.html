@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>회원가입 완료</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            max-width: 500px;
+            width: 100%;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            text-align: center;
+            font-size: 28px;
+        }
+        
+        .subtitle {
+            color: #666;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        label {
+            display: block;
+            color: #333;
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .disability-options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+        
+        .option-btn {
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            font-size: 16px;
+        }
+        
+        .option-btn:hover {
+            border-color: #667eea;
+            background: #f5f7ff;
+        }
+        
+        .option-btn.selected {
+            border-color: #667eea;
+            background: #667eea;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .wheelchair-options {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .wheelchair-btn {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 16px;
+        }
+        
+        .wheelchair-btn:hover {
+            border-color: #667eea;
+            background: #f5f7ff;
+        }
+        
+        .wheelchair-btn.selected {
+            border-color: #667eea;
+            background: #667eea;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .submit-btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 20px;
+        }
+        
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .submit-btn:active {
+            transform: translateY(0);
+        }
+        
+        .submit-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .user-info {
+            background: #f5f7ff;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .user-info p {
+            color: #666;
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>회원가입 완료 🎉</h1>
+        <p class="subtitle">추가 정보를 입력해주세요</p>
+        
+        <div class="user-info" id="userInfo">
+            <p>로그인 정보를 불러오는 중...</p>
+        </div>
+        
+        <form id="signupForm">
+            <div class="form-group">
+                <label>닉네임 *</label>
+                <input type="text" id="nickname" placeholder="사용할 닉네임을 입력하세요" required>
+            </div>
+            
+            <div class="form-group">
+                <label>장애 유형 *</label>
+                <div class="disability-options">
+                    <button type="button" class="option-btn" data-value="visual">시각 장애 👁️</button>
+                    <button type="button" class="option-btn" data-value="hearing">청각 장애 👂</button>
+                    <button type="button" class="option-btn" data-value="physical">지체 장애 🦾</button>
+                </div>
+                <input type="hidden" id="disabilityType" required>
+            </div>
+            
+            <div class="form-group">
+                <label>휠체어 사용 여부 *</label>
+                <div class="wheelchair-options">
+                    <button type="button" class="wheelchair-btn" data-value="true">사용함 ♿</button>
+                    <button type="button" class="wheelchair-btn" data-value="false">사용 안함</button>
+                </div>
+                <input type="hidden" id="wheelchair" required>
+            </div>
+            
+            <button type="submit" class="submit-btn" id="submitBtn" disabled>회원가입 완료</button>
+        </form>
+    </div>
+
+    <script>
+        // URL에서 user_id 가져오기
+        const urlParams = new URLSearchParams(window.location.search);
+        const userId = urlParams.get('user_id');
+        
+        if (userId) {
+            document.getElementById('userInfo').innerHTML = `
+                <p><strong>User ID:</strong> ${userId}</p>
+                <p>회원가입이 거의 완료되었습니다!</p>
+            `;
+        }
+        
+        // 장애 유형 선택
+        const disabilityButtons = document.querySelectorAll('.option-btn');
+        const disabilityInput = document.getElementById('disabilityType');
+        
+        disabilityButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                disabilityButtons.forEach(btn => btn.classList.remove('selected'));
+                this.classList.add('selected');
+                disabilityInput.value = this.dataset.value;
+                checkFormValid();
+            });
+        });
+        
+        // 휠체어 사용 여부 선택
+        const wheelchairButtons = document.querySelectorAll('.wheelchair-btn');
+        const wheelchairInput = document.getElementById('wheelchair');
+        
+        wheelchairButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                wheelchairButtons.forEach(btn => btn.classList.remove('selected'));
+                this.classList.add('selected');
+                wheelchairInput.value = this.dataset.value;
+                checkFormValid();
+            });
+        });
+        
+        // 닉네임 입력 체크
+        const nicknameInput = document.getElementById('nickname');
+        nicknameInput.addEventListener('input', checkFormValid);
+        
+        // 폼 유효성 검사
+        function checkFormValid() {
+            const nickname = nicknameInput.value.trim();
+            const disability = disabilityInput.value;
+            const wheelchair = wheelchairInput.value;
+            
+            const submitBtn = document.getElementById('submitBtn');
+            if (nickname && disability && wheelchair) {
+                submitBtn.disabled = false;
+            } else {
+                submitBtn.disabled = true;
+            }
+        }
+        
+        // 폼 제출
+        document.getElementById('signupForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                user_id: userId,
+                nickname: nicknameInput.value.trim(),
+                disability_type: disabilityInput.value,
+                has_wheelchair: wheelchairInput.value === 'true'
+            };
+            
+            console.log('제출할 데이터:', formData);
+            
+            try {
+                const response = await fetch('http://localhost:8000/users/auth/login/signup/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    alert('회원가입이 완료되었습니다! 🎉');
+                    window.location.href = 'success.html?user_id=' + userId;
+                } else {
+                    alert('오류가 발생했습니다: ' + (result.error || '알 수 없는 오류'));
+                }
+            } catch (error) {
+                console.error('에러:', error);
+                alert('서버와 통신 중 오류가 발생했습니다.');
+            }
+        });
+    </script>
+</body>
+</html>

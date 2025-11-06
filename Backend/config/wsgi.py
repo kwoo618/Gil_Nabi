@@ -1,4 +1,3 @@
-#서버 실행 관련 설정
 """
 WSGI config for config project.
 

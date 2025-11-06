@@ -12,10 +12,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
-import os # os 모듈 import
-from dotenv import load_dotenv # dotenv import
-
-load_dotenv()
+from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -30,7 +27,15 @@ SECRET_KEY = os.getenv('SECRET_KEY') # .env 파일에서 SECRET_KEY 값을 읽�
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+# 개발 환경에서는 이렇게 설정
+# 뜻 -> "10.0.2.2 주소로 오는 요청 받아줘!"
+ALLOWED_HOSTS = [
+    'localhost',
+    '127.0.0.1',
+    '10.0.2.2',      # 핵심! Android 에뮬레이터용
+    '*',             # 개발 중에만 사용 (배포 시 제거)
+]
+CORS_ALLOW_ALL_ORIGINS = True  # 개발 중에만 사용 (배포 시 제거)
 
 
 # Application definition
@@ -42,12 +47,20 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    'rest_framework',
-    'django_filters',
-    'places',
+    
+    "corsheaders", # CORS 허용을 위한 앱
+    "rest_framework_simplejwt", # JWT 
+    "rest_framework",
+
+    "users",
+    'reviews',
+    'community'
 ]
 
+AUTH_USER_MODEL = "users.User"  # '앱이름.모델이름' 형식
+
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware", # CORS 미들웨어 추가
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -57,12 +70,47 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication' # JWT
+    ], 
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated' # 기본적으로 인증이 필요
+    ], 
+}
+
+# JWT 상세 설정
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),  # Access Token 30분
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),     # Refresh Token 7일
+    'ROTATE_REFRESH_TOKENS': True,  # Refresh Token 갱신 시 새로 발급
+    'BLACKLIST_AFTER_ROTATION': True,  # 기존 Refresh Token 블랙리스트 처리
+    'AUTH_HEADER_TYPES': ('Bearer',),
+    'USER_ID_FIELD': 'id',
+    'USER_ID_CLAIM': 'user_id',
+}
+
+# Redis 설정 (Refresh Token 저장용)
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': 'redis://127.0.0.1:6379/1',  # Redis 서버 주소
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        }
+    }
+}
+
+CORS_ALLOW_CREDENTIALS = True # 세션 쿠키 전송 허용
+
+CORS_ALLOW_ALL_ORIGINS = True  # 개발 중에만 사용 (배포 시 제거) 
+
 ROOT_URLCONF = "config.urls"
 
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [BASE_DIR / 'templates'],
+        'DIRS': [BASE_DIR / 'test'],  # 테스트용 html 파일 위치
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -127,6 +175,9 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = "static/"
+STATICFILES_DIRS = [
+    BASE_DIR / 'test',
+]
 
 STATICFILES_DIRS = [
     BASE_DIR / "static", # Backend/static 폴더를 지정
