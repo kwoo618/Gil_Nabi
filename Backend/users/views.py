@@ -185,7 +185,7 @@ class SocialLoginView(APIView):
             refresh_token,
             timeout=60*60*24*7
         )
-        # 이미 가입했으면 리뷰 뷰로 바로 이동 
+        # 이미 가입했으면 맵 뷰로 바로 이동 
         if user.is_profile_complete:
             return redirect(f'/map/?access_token={access_token}&refresh_token={refresh_token}&user_id={user.id}')
         else :   # 아니면 회원가입 

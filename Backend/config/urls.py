@@ -20,7 +20,6 @@ urlpatterns = [
     path('signup/', TemplateView.as_view(template_name='signup.html'), name='signup_page'), 
     path('map/', show_map, name='show-map'),
     path('reviews/', TemplateView.as_view(template_name='reviews.html'), name='review_page'),
-    path('success/', TemplateView.as_view(template_name='success.html'), name='success_page'), 
 ]
 
 if settings.DEBUG:
