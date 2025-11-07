@@ -122,6 +122,8 @@ class User(AbstractBaseUser, PermissionsMixin): # AbstractBaseUser: 기본 로�
         ('physical', '지체장애'),
         ('visual', '시각장애'),
         ('hearing', '청각장애'),
+        ('crutches', '목발')
+
     ]
     disability_type = models.CharField(
         max_length=20, 
