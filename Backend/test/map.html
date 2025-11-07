@@ -1,0 +1,273 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <title>길나비 - 장소 정보 표시</title>
+    <style>
+        html, body { 
+            width: 100%; 
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        
+        /* ✅ 네비게이션 바 */
+        #navbar {
+            width: 100%;
+            height: 60px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            box-sizing: border-box;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        #navbar h1 {
+            color: white;
+            margin: 0;
+            font-size: 24px;
+        }
+        
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .nav-btn {
+            padding: 10px 20px;
+            background: white;
+            color: #667eea;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .nav-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        .nav-btn.logout {
+            background: #ff4444;
+            color: white;
+        }
+        
+        .nav-btn.logout:hover {
+            background: #cc0000;
+        }
+        
+        .user-info {
+            color: white;
+            font-size: 14px;
+        }
+        
+        /* 지도 및 컨트롤 */
+        #map { 
+            width: 100%; 
+            height: calc(70% - 60px);
+        }
+        
+        #controls { 
+            padding: 10px; 
+            text-align: center; 
+            height: 5%;
+        }
+        
+        #place-info {
+            width: 100%;
+            height: 25%;
+            padding: 10px;
+            box-sizing: border-box;
+            border-top: 1px solid #ccc;
+            overflow-y: auto;
+        }
+        
+        #place-info h3 { 
+            margin-top: 0; 
+        }
+        
+        #search-input {
+            padding: 8px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            width: 300px;
+            margin-right: 5px;
+        }
+        
+        #search-btn, #show-db-btn {
+            padding: 8px 16px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            margin: 0 5px;
+        }
+        
+        #search-btn:hover, #show-db-btn:hover {
+            background: #5568d3;
+        }
+    </style>
+</head>
+<body>
+    <!-- 네비게이션 바 -->
+    <div id="navbar">
+        <h1>🗺️ 길나비</h1>
+        <div class="nav-buttons">
+            <span class="user-info" id="userInfo">로딩 중...</span>
+            <a href="/map/" class="nav-btn">🗺️ 지도</a>
+            <a href="/reviews/" class="nav-btn">📝 리뷰</a>
+            <button class="nav-btn logout" onclick="logoutUser()">🚪 로그아웃</button>
+        </div>
+    </div>
+
+    <div id="map"></div>
+
+    <div id="controls">
+        <input type="text" id="search-input" placeholder="장소 검색">
+        <button id="search-btn">검색</button>
+        <button id="show-db-btn">DB 데이터 보기</button>
+    </div>
+
+    <div id="place-info">
+        <p>지도를 클릭하여 장소를 선택하세요.</p>
+    </div>
+    
+    <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey={{ kakao_map_key }}&libraries=services"></script>
+    {{ places|json_script:"places-data" }}
+    <script src="{% static 'js/map.js' %}"></script>
+    
+    <!-- ✅ 로그인 체크 및 로그아웃 -->
+    <script>
+        const API_BASE_URL = 'http://localhost:8000';
+        
+        async function checkLoginStatus() {
+            // ✅ URL 파라미터에서 토큰 가져오기
+            const urlParams = new URLSearchParams(window.location.search);
+            const accessToken = urlParams.get('access_token');
+            const refreshToken = urlParams.get('refresh_token');
+            const userId = urlParams.get('user_id');
+            
+            // ✅ 토큰이 URL에 있으면 localStorage에 저장
+            if (accessToken && refreshToken) {
+                localStorage.setItem('access_token', accessToken);
+                localStorage.setItem('refresh_token', refreshToken);
+                if (userId) {
+                    localStorage.setItem('user_id', userId);
+                }
+                
+                console.log('✅ 토큰 저장 완료');
+                
+                // ✅ URL 파라미터 제거 (보안 & 깔끔함)
+                window.history.replaceState({}, document.title, '/map/');
+            }
+            
+            // localStorage에서 토큰 가져오기
+            const token = localStorage.getItem('access_token');
+            
+            if (!token) {
+                document.getElementById('userInfo').textContent = '로그인 필요';
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/users/profile/`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`  // ✅ JWT 토큰
+                    }
+                });
+                
+                if (response.ok) {
+                    const userData = await response.json();
+                    document.getElementById('userInfo').textContent = `👤 ${userData.username}`;
+                    console.log('✅ 로그인 상태:', userData);
+                } else if (response.status === 401) {
+                    // ✅ 토큰 만료 시 리프레시 시도
+                    console.log('⚠️ 토큰 만료, 갱신 시도...');
+                    await refreshAccessToken();
+                    await checkLoginStatus(); // 재시도
+                } else {
+                    document.getElementById('userInfo').textContent = '로그인 필요';
+                }
+            } catch (error) {
+                console.error('❌ 사용자 정보 불러오기 실패:', error);
+                document.getElementById('userInfo').textContent = '로그인 필요';
+            }
+        }
+        
+        // ✅ Access Token 갱신
+        async function refreshAccessToken() {
+            const refreshToken = localStorage.getItem('refresh_token');
+            
+            if (!refreshToken) {
+                console.log('❌ Refresh Token 없음');
+                return false;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/users/auth/token/refresh/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        refresh_token: refreshToken
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    localStorage.setItem('access_token', data.access);
+                    console.log('✅ 토큰 갱신 성공');
+                    return true;
+                } else {
+                    console.log('❌ 토큰 갱신 실패, 재로그인 필요');
+                    localStorage.clear();
+                    return false;
+                }
+            } catch (error) {
+                console.error('❌ 토큰 갱신 실패:', error);
+                localStorage.clear();
+                return false;
+            }
+        }
+        
+        async function logoutUser() {
+            if (!confirm('로그아웃 하시겠습니까?')) {
+                return;
+            }
+            
+            const token = localStorage.getItem('access_token');
+            
+            try {
+                await fetch(`${API_BASE_URL}/users/auth/logout/`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                console.log('✅ 로그아웃 성공');
+            } catch (error) {
+                console.error('❌ 로그아웃 요청 실패:', error);
+            }
+            
+            localStorage.clear();
+            window.location.href = '/login/';
+        }
+        
+        document.addEventListener('DOMContentLoaded', checkLoginStatus);
+    </script>
+</body>
+</html>

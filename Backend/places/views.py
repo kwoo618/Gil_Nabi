@@ -10,9 +10,13 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from .recommendation import RecommendationEngine
 
+from rest_framework.permissions import AllowAny, IsAuthenticatedOrReadOnly, IsAuthenticated # 로그인 권한
+
+
 class RecommendPlacesAPI(APIView):
     def get(self, request):
         """AI 기반 장소 추천"""
+        permission_classes = [AllowAny]  # 임시 비활성화 
         # 파라미터 받기
         disability_type = request.query_params.get('disability_type', 'wheelchair')
         top_n = int(request.query_params.get('limit', 10))
@@ -46,6 +50,9 @@ class AccessibilityListAPI(ListCreateAPIView):
     filter_backends = [DjangoFilterBackend] # ID 필터링은 유지
     filterset_fields = ['id']
 
+    # 조회는 아무나 할 수 있지만, 생성은 로그인 필요
+    permission_classes = [AllowAny] # 임시 비활성화
+
     def get_queryset(self):
         queryset = Accessibility.objects.all()
         # URL 쿼리 파라미터에서 'search' 값을 가져옴 (예: ?search=성산)
@@ -67,6 +74,9 @@ class AccessibilityDetailAPI(RetrieveUpdateDestroyAPIView):
     serializer_class = AccessibilitySerializer
     # 👇 URL의 'pk' 변수가 우리 모델의 'id' 필드를 가리킨다고 명시
     lookup_field = 'id'
+
+    # 조회는 누구나 할 수 있지만, 수정 / 삭제는 로그인 필요 
+    permission_classes = [AllowAny] # 임시 비활성화
 
 
 def show_map(request):

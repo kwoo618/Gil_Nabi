@@ -12,14 +12,11 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
-<<<<<<< HEAD
 from datetime import timedelta
-=======
 import os # os 모듈 import
 from dotenv import load_dotenv # dotenv import
 
 load_dotenv()
->>>>>>> feature/ai-api
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent

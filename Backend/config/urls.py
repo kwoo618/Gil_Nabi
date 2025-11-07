@@ -7,15 +7,21 @@ from places.views import show_map
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+
+    # API 
     path('users/', include('users.urls')),  # Users 앱의 URL 포함
     path('api/reviews/', include('reviews.urls')), # Reviews 앱의 URL 포함
     path('api/places/', include('places.urls')),
-    path('', show_map, name='show-map'),
-    path('', TemplateView.as_view(template_name='login.html'), name='home'),   
-    path('reviews.html', TemplateView.as_view(template_name='reviews.html'), name='review_page'),
-    path('login.html', TemplateView.as_view(template_name='login.html'), name='login_page'),
-    path('signup.html', TemplateView.as_view(template_name='signup.html'), name='signup_page'),
-    path('success.html', TemplateView.as_view(template_name='success.html'), name='success_page'), 
+
+
+    # 테스트용 프론트엔드 
+    path('', TemplateView.as_view(template_name='login.html'), name='home'),  
+    path('login/', TemplateView.as_view(template_name='login.html'), name='login_page'),
+    path('signup/', TemplateView.as_view(template_name='signup.html'), name='signup_page'), 
+    path('map/', show_map, name='show-map'),
+    path('reviews/', TemplateView.as_view(template_name='reviews.html'), name='review_page'),
+    path('success/', TemplateView.as_view(template_name='success.html'), name='success_page'), 
+]
 
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATICFILES_DIRS[0])
