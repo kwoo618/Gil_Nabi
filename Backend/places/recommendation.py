@@ -8,25 +8,19 @@ class RecommendationEngine:
         self.claude_client = ClaudeClient()
     
     def calculate_place_score(self, place, user_disability_type=None):
-        """
-        장소의 추천 점수 계산
-        1. 접근성 기본 점수 (40%)
-        2. AI 감성 분석 점수 (30%)
-        3. 평균 별점 (30%)
-        """
+        """장소의 추천 점수 계산"""
         score_components = {}
         
-        # 1. 접근성 기본 점수 (규칙 기반)
+        # 1. 접근성 기본 점수 (40%)
         accessibility_score = self._calculate_accessibility_score(place, user_disability_type)
         score_components['accessibility'] = accessibility_score * 0.4
         
-        # 2. AI 감성 점수 (나중에 리뷰 연동)
-        # 현재는 목업 데이터로 테스트
-        ai_score = 70  # 임시값, 나중에 실제 리뷰 분석
+        # 2. AI 감성 점수 (30%)
+        ai_score = 70  # 임시값
         score_components['ai_sentiment'] = ai_score * 0.3
         
-        # 3. 평균 별점 (나중에 리뷰 연동)
-        rating_score = 80  # 임시값, 나중에 실제 평점
+        # 3. 평균 별점 (30%)
+        rating_score = 80  # 임시값
         score_components['rating'] = rating_score * 0.3
         
         total_score = sum(score_components.values())
@@ -42,7 +36,8 @@ class RecommendationEngine:
         """접근성 기본 점수 계산"""
         score = 50  # 기본 점수
         
-        if user_disability_type == 'wheelchair':
+        # ⚠️ 수정: 'wheelchair'가 아니라 'physical'
+        if user_disability_type == 'physical':  # 팀원 User 모델과 일치
             if place.wheelchair == True:
                 score += 30
             if place.has_elevator == True:
@@ -53,14 +48,12 @@ class RecommendationEngine:
                 score += 10
                 
         elif user_disability_type == 'visual':
-            # 시각 장애인용 점수 (추후 필드 추가)
             score = 70
             
         elif user_disability_type == 'hearing':
-            # 청각 장애인용 점수 (추후 필드 추가)
             score = 70
             
-        return min(score, 100)  # 최대 100점
+        return min(score, 100)
     
     def get_recommended_places(self, user_disability_type=None, top_n=10):
         """추천 장소 목록 반환"""
@@ -71,7 +64,36 @@ class RecommendationEngine:
             score_data = self.calculate_place_score(place, user_disability_type)
             scored_places.append(score_data)
         
-        # 점수 높은 순 정렬
         scored_places.sort(key=lambda x: x['total_score'], reverse=True)
+        return scored_places[:top_n]
+    
+    # ⚠️ 메서드가 클래스 밖에 있었음 - 들여쓰기 수정
+    def get_recommended_places_for_user(self, user=None, disability_type=None, has_wheelchair=False, top_n=10):
+        """사용자 맞춤 추천"""
+        places = Accessibility.objects.all()
+        scored_places = []
         
+        for place in places:
+            score = 0
+            
+            if has_wheelchair and place.wheelchair:
+                score += 40
+            
+            if user:
+                from reviews.models import Review
+                reviews = Review.objects.filter(
+                    place=place,
+                    user__disability_type=disability_type
+                )
+                if reviews.exists():
+                    avg_rating = reviews.aggregate(Avg('rating'))['rating__avg']
+                    score += avg_rating * 10
+            
+            scored_places.append({
+                'place_id': place.id,
+                'place_name': place.building_name,
+                'total_score': score
+            })
+        
+        scored_places.sort(key=lambda x: x['total_score'], reverse=True)
         return scored_places[:top_n]
