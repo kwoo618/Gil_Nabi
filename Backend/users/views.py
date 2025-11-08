@@ -1,13 +1,13 @@
 # 요청 처리 (API 구현)
 # 실제 동작/로직이 구현되는 파일
-# KaKao, Naver 소셜 로그인 API 호출 및 응답 처리
+# KaKao, Google 소셜 로그인 API 호출 및 응답 처리
 
 # Django REST Framework에서 APIView와 응답 도구 가져오기 
 from rest_framework.views import APIView                    # API 요청 처리용 클래스 
 from rest_framework.response import Response                # API 응답용 클래스 (JSON 응답 생성)
 from rest_framework import status                           # HTTP 상태 코드
 from rest_framework_simplejwt.tokens import RefreshToken    # JWT 설정 
-from django.core.cache import cache                         # redis 설정
+from django.core.cache import cache                         # redis 설정 
 from rest_framework.permissions import AllowAny, IsAuthenticated # 접근 권한 
 from django.shortcuts import redirect
 from django.http import JsonResponse
@@ -214,11 +214,18 @@ class CompleteProfileView(APIView):
             user.has_wheelchair = has_wheelchair
             user.is_profile_complete = True
             user.save()
-            
+
+            # 회원가입 이후 자동 로그인이 안되는 현상이 발생하여 토큰 추가 
+            refresh = RefreshToken.for_user(user)
+        
             return Response({
-                'message': '프로필 완성 성공',
-                'user_id': user_id
-            }, status=status.HTTP_200_OK)
+                'message': '회원가입이 완료되었습니다',
+                'user_id': user.id,
+                'access_token': str(refresh.access_token),  
+                'refresh_token': str(refresh), 
+            }, status = status.HTTP_200_OK)
+            
+            
         except User.DoesNotExist:
             return Response({
                 'error': '사용자를 찾을 수 없습니다'
@@ -285,8 +292,7 @@ class UserProfileView(APIView):
         user = request.user
         return Response({
             'id': user.id,
-            'username': user.username,
-            'email': getattr(user, 'email', ''),
+            'username': user.nickname,
             'profile_image': user.profile_image,
         })
 

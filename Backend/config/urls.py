@@ -15,6 +15,7 @@ urlpatterns = [
 
 
     # 테스트용 프론트엔드 
+    # path('admin-page/', TemplateView.as_view(template_name='admin.html'), name='admin_page'), 관리자 페이지 추후 추가 예정
     path('', TemplateView.as_view(template_name='login.html'), name='home'),  
     path('login/', TemplateView.as_view(template_name='login.html'), name='login_page'),
     path('signup/', TemplateView.as_view(template_name='signup.html'), name='signup_page'), 

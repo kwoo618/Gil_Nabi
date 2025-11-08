@@ -15,7 +15,7 @@ from .views import (
     TokenRefreshView,
     UserProfileView
 ) 
-urlpatterns = [
+urlpatterns = [    
     path('', HomeView.as_view(), name='user_home'),
     path('auth/', SocialLoginView.as_view(), name='auth'),
     path('auth/login/', SocialLoginView.as_view(), name='login'),

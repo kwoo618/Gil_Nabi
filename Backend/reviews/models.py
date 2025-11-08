@@ -11,7 +11,7 @@ class Review(models.Model):
         verbose_name='작성자'
     )
     
-    # ✅ place 필드 추가!
+    # place 필드 추가!
     place = models.ForeignKey(
         'places.Accessibility',
         on_delete=models.CASCADE,
