@@ -11,14 +11,22 @@ class Review(models.Model):
         verbose_name='작성자'
     )
     
-    # place 필드 추가!
-    place = models.ForeignKey(
-        'places.Accessibility',
-        on_delete=models.CASCADE,
-        related_name='place_reviews',
-        verbose_name='장소',
-        null=True,
-        blank=True
+    place_id = models.CharField(
+        max_length=100,
+        verbose_name='장소 ID',
+        db_index=True,  # 검색 빠르게 해준다고 함 
+        default='UNKNOWN'
+    )
+    place_name = models.CharField(
+        max_length=200,
+        verbose_name='장소명',
+        default='알 수 없는 장소'
+    )
+    place_address = models.CharField(
+        max_length=300,
+        verbose_name='주소',
+        blank=True,
+        default=''
     )
     
     content = models.TextField(
