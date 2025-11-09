@@ -217,13 +217,26 @@ class CompleteProfileView(APIView):
 
             # 회원가입 이후 자동 로그인이 안되는 현상이 발생하여 토큰 추가 
             refresh = RefreshToken.for_user(user)
+            access_token = str(refresh.access_token)
+            refresh_token = str(refresh)
+
+            cache.set(
+                f'refresh_token:{user.id}',
+                refresh_token,
+                timeout=60*60*24*7  # 7일
+            )
         
             return Response({
                 'message': '회원가입이 완료되었습니다',
-                'user_id': user.id,
                 'access_token': str(refresh.access_token),  
-                'refresh_token': str(refresh), 
-            }, status = status.HTTP_200_OK)
+                'refresh_token': str(refresh),  
+                'user': {
+                    'id': user.id,
+                    'username': user.username,
+                    'nickname': user.nickname,
+                    'disability_type': user.disability_type
+                }
+            })
             
             
         except User.DoesNotExist:
@@ -293,7 +306,9 @@ class UserProfileView(APIView):
         return Response({
             'id': user.id,
             'username': user.nickname,
+            'nickname': user.nickname,
             'profile_image': user.profile_image,
+            'disability_type': user.disability_type,
         })
 
 class HomeView(APIView):
