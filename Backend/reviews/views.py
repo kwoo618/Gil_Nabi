@@ -4,9 +4,11 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from django.db.models import Avg, Count
 
 from .models import Review 
-from .serializers import ReviewSerializer, ReviewListSerializer
+
+from .serializers import ReviewSerializer, ReviewListSerializer, ReviewCreateSerializer
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
@@ -17,7 +19,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
     
     def get_permissions(self):
         """액션별로 권한 다르게 설정"""
-        if self.action in ['list', 'retrieve']:
+        if self.action in ['list', 'retrieve', 'by_place']:
             # 목록 조회, 상세 조회는 누구나 가능
             return [AllowAny()]
         else:
@@ -34,13 +36,18 @@ class ReviewViewSet(viewsets.ModelViewSet):
         """필터링된 쿼리셋 반환"""
         queryset = Review.objects.select_related('user')
         
-        # URL 쿼리 파라미터로 필터링
-        disability_type = self.request.query_params.get('disability_type', None)
-        rating = self.request.query_params.get('rating', None)
+        # 특정 장소의 리뷰만 조회
+        place_id = self.request.query_params.get('place_id')
+        if place_id:
+            queryset = queryset.filter(place_id=place_id)
 
+        # 장애 유형별 필터
+        disability_type = self.request.query_params.get('disability_type')
         if disability_type:
             queryset = queryset.filter(disability_type=disability_type)
 
+        # 별점 필터
+        rating = self.request.query_params.get('rating')
         if rating: 
             queryset = queryset.filter(rating=rating)
 
@@ -104,3 +111,38 @@ class ReviewViewSet(viewsets.ModelViewSet):
         reviews = self.get_queryset().filter(user=request.user)
         serializer = self.get_serializer(reviews, many=True)
         return Response(serializer.data)
+
+    @action(detail=False, methods=['get'], permission_classes=[AllowAny])
+    def by_place(self, request):
+        """특정 장소의 모든 리뷰 + 통계 조회"""
+        place_id = request.query_params.get('place_id')
+        
+        if not place_id:
+            return Response(
+                {"error": "place_id가 필요합니다."}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        reviews = self.get_queryset().filter(place_id=place_id)
+        serializer = ReviewListSerializer(reviews, many=True)
+        
+        # 통계 정보
+        stats = reviews.aggregate(
+            total_reviews=Count('id'),
+            average_rating=Avg('rating')
+        )
+        
+        # 장애 유형별 리뷰 수
+        disability_stats = reviews.values('disability_type').annotate(
+            count=Count('id')
+        )
+        
+        return Response({
+            'place_id': place_id,
+            'reviews': serializer.data,
+            'stats': {
+                'total_reviews': stats['total_reviews'] or 0,
+                'average_rating': round(stats['average_rating'] or 0, 1),
+                'by_disability_type': list(disability_stats)
+            }
+        })

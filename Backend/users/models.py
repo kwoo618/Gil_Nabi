@@ -79,6 +79,13 @@ class User(AbstractBaseUser, PermissionsMixin): # AbstractBaseUser: 기본 로�
         ('kakao', 'Kakao'), 
         ('google', 'Google'), 
     ) 
+
+    # ================== Primary Key 자동 생성 =============================
+
+    id = models.AutoField(  # Djagno ORM 시스템에서 자동으로 생성해줌 
+        primary_key=True,
+        verbose_name='사용자 고유 ID',
+    )
     
     # ============== 필수 입력 필드 ========================================
     social_id = models.CharField(
@@ -89,7 +96,6 @@ class User(AbstractBaseUser, PermissionsMixin): # AbstractBaseUser: 기본 로�
     )
 
     provider = models.CharField(
-        max_length=20,
         choices=SOCIAL_PROVIDERS,  # 'kakao' 또는 'google'만 허용
         verbose_name='로그인 제공자',
         help_text='카카오 또는 구글'
@@ -111,20 +117,17 @@ class User(AbstractBaseUser, PermissionsMixin): # AbstractBaseUser: 기본 로�
     # ============== 장애인 앱 선택 필드 ===================
 
     nickname = models.CharField(
-        max_length=50,
-        blank=True,
-        null=True,
-        verbose_name='닉네임',
-        help_text='사용자가 직접 설정한 닉네임'
+        max_length=50, blank=True, null=True
     )
+
     # 장애 유형 선택지
     DISABILITY_CHOICES = [
         ('physical', '지체장애'),
         ('visual', '시각장애'),
         ('hearing', '청각장애'),
-        ('crutches', '목발')
 
     ]
+
     disability_type = models.CharField(
         max_length=20, 
         choices=DISABILITY_CHOICES, 
@@ -173,8 +176,8 @@ class User(AbstractBaseUser, PermissionsMixin): # AbstractBaseUser: 기본 로�
 
     # ============ 헬퍼 메서드 (유틸리티 함수) ============
     def get_full_name(self):
-        return self.nickname if self.nickname else self.username 
+        return self.nickname 
     def get_short_name(self):
-        return self.username
+        return self.nickname 
     def has_completed_profile(self):
         return self.is_profile_complete

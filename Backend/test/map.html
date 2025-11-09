@@ -12,7 +12,7 @@
             padding: 0;
         }
         
-        /* ✅ 네비게이션 바 */
+        /* 네비게이션 바 */
         #navbar {
             width: 100%;
             height: 60px;
@@ -119,6 +119,108 @@
         #search-btn:hover, #show-db-btn:hover {
             background: #5568d3;
         }
+        
+        /* 리뷰 작성 팝업 */
+        #review-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        #review-form-container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        #review-form-container h3 {
+            margin-top: 0;
+            color: #667eea;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+        
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        
+        .form-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .btn-submit, .btn-cancel {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        
+        .btn-submit {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-submit:hover {
+            background: #5568d3;
+        }
+        
+        .btn-cancel {
+            background: #e0e0e0;
+            color: #333;
+        }
+        
+        .btn-cancel:hover {
+            background: #d0d0d0;
+        }
+
+        .write-review-btn {
+            margin-top: 10px;
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .write-review-btn:hover {
+            background: #5568d3;
+        }
     </style>
 </head>
 <body>
@@ -144,39 +246,147 @@
     <div id="place-info">
         <p>지도를 클릭하여 장소를 선택하세요.</p>
     </div>
+
+    <!-- 리뷰 작성 팝업 -->
+    <div id="review-modal">
+        <div id="review-form-container">
+            <h3>📝 리뷰 작성</h3>
+            <form id="review-form">
+                <div class="form-group">
+                    <label>장소명</label>
+                    <input type="text" id="place-name" readonly>
+                </div>
+                
+                <div class="form-group">
+                    <label>별점</label>
+                    <select id="rating" required>
+                        <option value="">선택하세요</option>
+                        <option value="5">⭐⭐⭐⭐⭐ (5점)</option>
+                        <option value="4">⭐⭐⭐⭐ (4점)</option>
+                        <option value="3">⭐⭐⭐ (3점)</option>
+                        <option value="2">⭐⭐ (2점)</option>
+                        <option value="1">⭐ (1점)</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>접근성 유형</label>
+                    <select id="disability-type" required>
+                        <option value="">선택하세요</option>
+                        <option value="wheelchair">휠체어</option>
+                        <option value="visual">시각장애</option>
+                        <option value="hearing">청각장애</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>리뷰 내용</label>
+                    <textarea id="content" required placeholder="이 장소의 접근성에 대해 자세히 알려주세요"></textarea>
+                </div>
+                
+                <input type="hidden" id="place-id">
+                
+                <div class="form-buttons">
+                    <button type="submit" class="btn-submit">작성하기</button>
+                    <button type="button" class="btn-cancel" onclick="closeReviewModal()">취소</button>
+                </div>
+            </form>
+        </div>
+    </div>
     
     <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey={{ kakao_map_key }}&libraries=services"></script>
     {{ places|json_script:"places-data" }}
     <script src="{% static 'js/map.js' %}"></script>
     
-    <!-- ✅ 로그인 체크 및 로그아웃 -->
     <script>
         const API_BASE_URL = 'http://localhost:8000';
+        let selectedPlace = null;
         
+        // 리뷰 작성 팝업 열기
+        function openReviewModal(placeId, placeName) {
+            const token = localStorage.getItem('access_token');
+            if (!token) {
+                alert('로그인이 필요합니다.');
+                window.location.href = '/login/';
+                return;
+            }
+            
+            selectedPlace = { id: placeId, name: placeName };
+            document.getElementById('place-id').value = placeId;
+            document.getElementById('place-name').value = placeName;
+            document.getElementById('review-modal').style.display = 'flex';
+        }
+        
+        // 리뷰 작성 팝업 닫기
+        function closeReviewModal() {
+            document.getElementById('review-modal').style.display = 'none';
+            document.getElementById('review-form').reset();
+            selectedPlace = null;
+        }
+        
+        // 리뷰 작성 제출
+        document.getElementById('review-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const token = localStorage.getItem('access_token');
+            if (!token) {
+                alert('로그인이 필요합니다.');
+                return;
+            }
+            
+            const formData = {
+                place_id: document.getElementById('place-id').value,
+                content: document.getElementById('content').value,
+                rating: parseInt(document.getElementById('rating').value),
+                disability_type: document.getElementById('disability-type').value
+            };
+            
+            console.log('📤 리뷰 전송:', formData);
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/reviews/`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('✅ 리뷰 작성 성공:', data);
+                    alert('리뷰가 작성되었습니다!');
+                    closeReviewModal();
+                } else {
+                    const error = await response.json();
+                    console.error('❌ 리뷰 작성 실패:', error);
+                    alert('리뷰 작성에 실패했습니다: ' + JSON.stringify(error));
+                }
+            } catch (error) {
+                console.error('❌ 네트워크 오류:', error);
+                alert('네트워크 오류가 발생했습니다.');
+            }
+        });
+        
+        // 로그인 체크 (기존 코드)
         async function checkLoginStatus() {
-            // ✅ URL 파라미터에서 토큰 가져오기
             const urlParams = new URLSearchParams(window.location.search);
             const accessToken = urlParams.get('access_token');
             const refreshToken = urlParams.get('refresh_token');
             const userId = urlParams.get('user_id');
             
-            // ✅ 토큰이 URL에 있으면 localStorage에 저장
             if (accessToken && refreshToken) {
                 localStorage.setItem('access_token', accessToken);
                 localStorage.setItem('refresh_token', refreshToken);
                 if (userId) {
                     localStorage.setItem('user_id', userId);
                 }
-                
                 console.log('✅ 토큰 저장 완료');
-                
-                // ✅ URL 파라미터 제거 (보안 & 깔끔함)
                 window.history.replaceState({}, document.title, '/map/');
             }
             
-            // localStorage에서 토큰 가져오기
             const token = localStorage.getItem('access_token');
-            
             if (!token) {
                 document.getElementById('userInfo').textContent = '로그인 필요';
                 return;
@@ -185,7 +395,7 @@
             try {
                 const response = await fetch(`${API_BASE_URL}/users/profile/`, {
                     headers: {
-                        'Authorization': `Bearer ${token}`  // ✅ JWT 토큰
+                        'Authorization': `Bearer ${token}`
                     }
                 });
                 
@@ -194,10 +404,9 @@
                     document.getElementById('userInfo').textContent = `👤 ${userData.username}`;
                     console.log('✅ 로그인 상태:', userData);
                 } else if (response.status === 401) {
-                    // ✅ 토큰 만료 시 리프레시 시도
                     console.log('⚠️ 토큰 만료, 갱신 시도...');
                     await refreshAccessToken();
-                    await checkLoginStatus(); // 재시도
+                    await checkLoginStatus();
                 } else {
                     document.getElementById('userInfo').textContent = '로그인 필요';
                 }
@@ -207,10 +416,8 @@
             }
         }
         
-        // ✅ Access Token 갱신
         async function refreshAccessToken() {
             const refreshToken = localStorage.getItem('refresh_token');
-            
             if (!refreshToken) {
                 console.log('❌ Refresh Token 없음');
                 return false;
@@ -250,7 +457,6 @@
             }
             
             const token = localStorage.getItem('access_token');
-            
             try {
                 await fetch(`${API_BASE_URL}/users/auth/logout/`, {
                     method: 'POST',
@@ -268,6 +474,25 @@
         }
         
         document.addEventListener('DOMContentLoaded', checkLoginStatus);
+    </script>
+    
+    <!-- ✅ 지도 클릭 시 리뷰 작성 버튼 추가 -->
+    <script>
+        // 장소 정보 표시 시 리뷰 작성 버튼 추가하는 함수
+        window.showPlaceInfoWithReview = function(place) {
+            const placeInfoDiv = document.getElementById('place-info');
+            placeInfoDiv.innerHTML = `
+                <h3>${place.building_name || '선택한 장소'}</h3>
+                <p><strong>ID:</strong> ${place.id}</p>
+                <p><strong>경사로:</strong> ${place.has_ramp ? '✅' : '❌'}</p>
+                <p><strong>휠체어:</strong> ${place.wheelchair ? '✅' : '❌'}</p>
+                <p><strong>접근 가능 화장실:</strong> ${place.accessible_toilet ? '✅' : '❌'}</p>
+                <p><strong>엘리베이터:</strong> ${place.has_elevator ? '✅' : '❌'}</p>
+                <button class="write-review-btn" onclick="openReviewModal('${place.id}', '${place.building_name}')">
+                    📝 이 장소에 리뷰 작성하기
+                </button>
+            `;
+        };
     </script>
 </body>
 </html>

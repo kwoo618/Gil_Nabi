@@ -17,8 +17,17 @@ class RecommendPlacesAPI(APIView):
     def get(self, request):
         """AI 기반 장소 추천"""
         permission_classes = [AllowAny]  # 임시 비활성화 
-        # 파라미터 받기
-        disability_type = request.query_params.get('disability_type', 'wheelchair')
+        # 인증된 사용자면 그 정보 사용
+        if request.user.is_authenticated:
+            user = request.user
+            disability_type = user.disability_type
+            has_wheelchair = user.has_wheelchair
+        else:
+            # 쿼리 파라미터에서 가져오기
+            disability_type = request.query_params.get('disability_type', 'physical')
+            has_wheelchair = request.query_params.get('has_wheelchair', 'false') == 'true'
+        
+        
         top_n = int(request.query_params.get('limit', 10))
         
         # 추천 엔진 실행

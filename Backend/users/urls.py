@@ -15,12 +15,11 @@ from .views import (
     TokenRefreshView,
     UserProfileView
 ) 
-urlpatterns = [
+urlpatterns = [    
     path('', HomeView.as_view(), name='user_home'),
     path('auth/', SocialLoginView.as_view(), name='auth'),
     path('auth/login/', SocialLoginView.as_view(), name='login'),
     path('auth/login/signup/', CompleteProfileView.as_view(), name='signup'),
-    path('auth/login/signup/success/', CompleteProfileView.as_view(), name='success'),
     path('auth/logout/', LogoutView.as_view(), name='logout'), 
     path('auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('profile/', UserProfileView.as_view(), name='user_profile'),

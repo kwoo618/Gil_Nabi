@@ -1,3 +1,5 @@
+
+const API_BASE_URL = 'http://localhost:8000';
 // kakao.maps.load(): 카카오맵 SDK 로딩 및 초기화가 완료되면 이 함수 안의 코드를 실행합니다.
 kakao.maps.load(function() {
 
@@ -171,12 +173,13 @@ kakao.maps.load(function() {
     function displayMarkerAndInfo(placeData) {
         // 유효성 검사
         if (!placeData || !(placeData.y || placeData.latitude) || !(placeData.x || placeData.longitude) || !(placeData.place_name || placeData.building_name)) {
-             console.error("displayMarkerAndInfo: 유효하지 않음", placeData);
-             placeInfoDiv.innerHTML = '<p>장소 정보 표시 불가.</p>';
-             return;
+            console.error("displayMarkerAndInfo: 유효하지 않음", placeData);
+            placeInfoDiv.innerHTML = '<p>장소 정보 표시 불가.</p>';
+            return;
         }
         const placeName = placeData.place_name || placeData.building_name;
         const latitude = parseFloat(placeData.y || placeData.latitude);
+        const placeId = placeData.id
         const longitude = parseFloat(placeData.x || placeData.longitude);
         if (isNaN(latitude) || isNaN(longitude)) {
             console.error("displayMarkerAndInfo: 좌표 오류", placeData);
@@ -186,13 +189,13 @@ kakao.maps.load(function() {
 
         console.log("마커 및 정보 표시:", placeData);
 
-        // 이전 마커 제거 (클릭 이벤트 리스너에서도 하지만 여기서 한번 더)
+        // 이전 마커 제거
         if (selectedMarker) { selectedMarker.setMap(null); }
 
         // 새 선택 마커 생성 및 표시
         selectedMarker = new kakao.maps.Marker({
-             position: new kakao.maps.LatLng(latitude, longitude),
-             title: placeName
+            position: new kakao.maps.LatLng(latitude, longitude),
+            title: placeName
         });
         selectedMarker.setMap(map);
 
@@ -205,9 +208,10 @@ kakao.maps.load(function() {
 
         // 정보창 업데이트
         placeInfoDiv.innerHTML = `
+        <div class="info-panel">
             <h3>${placeName}</h3>
             <p><strong>주소:</strong> ${placeData.address_name || placeData.address || '정보 없음'}</p>
-            <p><strong>ID:</strong> ${placeData.id || '정보 없음'}</p>
+            <p><strong>ID:</strong> ${placeId}</p>
             <hr>
             <h4>접근성 정보: <button id="edit-btn">수정</button></h4>
             <div id="accessibility-info">
@@ -216,8 +220,75 @@ kakao.maps.load(function() {
                 <p>화장실: ${getAccessibilityRawValue(placeData.accessible_toilet)}</p>
                 <p>엘리베이터: ${getAccessibilityRawValue(placeData.has_elevator)}</p>
             </div>
-        `;
+            <hr>
+            <button class="write-review-btn" id="write-review-btn">📝 리뷰 작성</button>
+        </div>
+        
+        <div class="info-panel" id="review-section">
+            <h3>리뷰 (로딩중...)</h3>
+            <div id="reviews-list"></div>
+        </div>
+    `;
+    
+        // 이벤트 리스너
         document.getElementById('edit-btn').addEventListener('click', showEditForm);
+        document.getElementById('write-review-btn').addEventListener('click', function() {
+            window.openReviewModal(placeId, placeName);
+        });
+        loadPlaceReviews(placeId); // 리뷰 불러오기
+    }
+    // ✅ 특정 장소의 리뷰 불러오기
+    async function loadPlaceReviews(placeId) {
+        const reviewSection = document.getElementById('review-section');
+        const reviewsList = document.getElementById('reviews-list');
+        
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/reviews/by_place/?place_id=${placeId}`);
+            
+            if (!response.ok) {
+                throw new Error('리뷰를 불러올 수 없습니다.');
+            }
+            
+            const data = await response.json();
+            const reviews = data.reviews;
+            const stats = data.stats;
+            
+            // 통계 표시
+            let html = `
+                <h3>리뷰 (${stats.total_reviews}개)</h3>
+                <div class="review-stats">
+                    ⭐ 평균 ${stats.average_rating}점
+                </div>
+            `;
+            
+            // 리뷰 목록
+            if (reviews.length === 0) {
+                html += '<p style="text-align: center; color: #999;">아직 리뷰가 없습니다.</p>';
+            } else {
+                reviews.slice(0, 5).forEach(review => {  // 최대 5개만 표시
+                    const stars = '⭐'.repeat(review.rating);
+                    html += `
+                        <div class="review-item">
+                            <div class="review-header">
+                                <span class="review-author">${review.nickname || '익명'}</span>
+                                <span class="review-rating">${stars}</span>
+                            </div>
+                            <div class="review-content">${review.content}</div>
+                        </div>
+                    `;
+                });
+                
+                if (reviews.length > 5) {
+                    html += `<p style="text-align: center; color: #666; font-size: 12px;">+${reviews.length - 5}개 더보기</p>`;
+                }
+            }
+            
+            reviewSection.innerHTML = html;
+            
+        } catch (error) {
+            console.error('리뷰 불러오기 실패:', error);
+            reviewSection.innerHTML = '<h3>리뷰</h3><p>리뷰를 불러올 수 없습니다.</p>';
+        }
     }
 
     // --- 수정 폼 보여주는 함수 ---
