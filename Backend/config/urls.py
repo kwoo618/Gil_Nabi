@@ -12,6 +12,7 @@ urlpatterns = [
     path('users/', include('users.urls')),  # Users 앱의 URL 포함
     path('api/reviews/', include('reviews.urls')), # Reviews 앱의 URL 포함
     path('api/places/', include('places.urls')),
+    path('api/', include('community.urls')),
 
 
     # 테스트용 프론트엔드 
@@ -21,6 +22,7 @@ urlpatterns = [
     path('signup/', TemplateView.as_view(template_name='signup.html'), name='signup_page'), 
     path('map/', show_map, name='show-map'),
     path('reviews/', TemplateView.as_view(template_name='reviews.html'), name='review_page'),
+    path('community/', TemplateView.as_view(template_name='community.html'), name='community_page'),
 ]
 
 if settings.DEBUG:
