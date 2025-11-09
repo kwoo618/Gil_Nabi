@@ -284,7 +284,7 @@
                 
                 if (response.ok) {
                     currentUser = await response.json();
-                    document.getElementById('userInfo').textContent = `👤 ${currentUser.username}`;
+                    document.getElementById('userInfo').textContent = `👤 ${currentUser.nickname}`;
                 } else {
                     document.getElementById('userInfo').textContent = '로그인 필요';
                 }
@@ -383,13 +383,14 @@
                     <div class="review-card">
                         <div class="review-header">
                             <div class="review-author">
-                                ${review.username || '익명'} 
+                                ${review.nickname || '익명'} 
                                 <span class="place-badge">${disabilityTypeMap[review.disability_type] || review.disability_type}</span>
                             </div>
                             <div class="review-rating">${stars} ${review.rating}점</div>
                         </div>
                         <div class="review-content">${review.content}</div>
                         <div class="review-footer">
+                            <span class="place-name" style="font-weight: bold;">📍 ${review.place_name || '장소 정보 없음'}</span>
                             <span>${date}</span>
                             ${isMyReview ? `<button class="delete-btn" onclick="deleteReview(${review.id})">삭제</button>` : ''}
                         </div>

@@ -30,11 +30,14 @@ class ReviewViewSet(viewsets.ModelViewSet):
         """목록 조회 시 간단한 시리얼라이저 사용"""
         if self.action == 'list':
             return ReviewListSerializer
+        elif self.action == 'create':
+            return ReviewCreateSerializer
         return ReviewSerializer
+            
 
     def get_queryset(self):
         """필터링된 쿼리셋 반환"""
-        queryset = Review.objects.select_related('user')
+        queryset = Review.objects.select_related('user', 'place')
         
         # 특정 장소의 리뷰만 조회
         place_id = self.request.query_params.get('place_id')
@@ -72,6 +75,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
         
         print(f"[SUCCESS] 리뷰 저장 완료!\n")
         
+        response_serializer = ReviewSerializer(serializer.instance)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def update(self, request, *args, **kwargs):
@@ -109,7 +113,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
     def my_reviews(self, request):
         """현재 로그인한 사용자가 작성한 리뷰만 조회"""
         reviews = self.get_queryset().filter(user=request.user)
-        serializer = self.get_serializer(reviews, many=True)
+        serializer = ReviewListSerializer(reviews, many=True)
         return Response(serializer.data)
 
     @action(detail=False, methods=['get'], permission_classes=[AllowAny])
