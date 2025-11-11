@@ -12,7 +12,7 @@ urlpatterns = [
     path('users/', include('users.urls')),  # Users 앱의 URL 포함
     path('api/reviews/', include('reviews.urls')), # Reviews 앱의 URL 포함
     path('api/places/', include('places.urls')),
-    path('api/', include('community.urls')),
+    path('api/community/', include('community.urls')),
 
 
     # 테스트용 프론트엔드 

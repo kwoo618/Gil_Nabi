@@ -262,7 +262,7 @@
         // 1. 게시글 목록 불러오기 (GET /api/posts/)
         async function loadPosts() {
             try {
-                const response = await fetch(`${API_BASE_URL}/api/posts/`, {
+                const response = await fetch(`${API_BASE_URL}/api/community/posts/`, {
                     headers: getAuthHeader()
                 });
                 if (!response.ok) throw new Error('게시글 로드 실패');
@@ -311,7 +311,7 @@
             const content = document.getElementById('post-content').value;
             
             try {
-                const response = await fetch(`${API_BASE_URL}/api/posts/`, {
+                const response = await fetch(`${API_BASE_URL}/api/community/posts/`, {
                     method: 'POST',
                     headers: getAuthHeader(),
                     body: JSON.stringify({ title, content })
@@ -334,7 +334,7 @@
         async function loadPostDetail(postId) {
             currentPostId = postId;
             try {
-                const response = await fetch(`${API_BASE_URL}/api/posts/${postId}/`, {
+                const response = await fetch(`${API_BASE_URL}/api/community/posts/${postId}/`, {
                     headers: getAuthHeader()
                 });
                 if (!response.ok) throw new Error('게시글 상세 로드 실패');
@@ -402,7 +402,7 @@
             if (!confirm('정말 이 게시글을 삭제하시겠습니까?')) return;
             
             try {
-                const response = await fetch(`${API_BASE_URL}/api/posts/${postId}/`, {
+                const response = await fetch(`${API_BASE_URL}/api/community/posts/${postId}/`, {
                     method: 'DELETE',
                     headers: getAuthHeader()
                 });
@@ -434,7 +434,7 @@
             const content = document.getElementById('comment-content').value;
             
             try {
-                const response = await fetch(`${API_BASE_URL}/api/posts/${currentPostId}/comments/`, {
+                const response = await fetch(`${API_BASE_URL}/api/community/posts/${currentPostId}/comments/`, {
                     method: 'POST',
                     headers: getAuthHeader(),
                     body: JSON.stringify({ content })
@@ -459,7 +459,7 @@
             if (!confirm('정말 이 댓글을 삭제하시겠습니까?')) return;
             
             try {
-                const response = await fetch(`${API_BASE_URL}/api/comments/${commentId}/`, {
+                const response = await fetch(`${API_BASE_URL}/api/community/comments/${commentId}/`, {
                     method: 'DELETE',
                     headers: getAuthHeader()
                 });
@@ -484,7 +484,7 @@
             event.stopPropagation(); // 목록에서 클릭 시 상세페이지로 넘어가지 않게
             
             try {
-                const response = await fetch(`${API_BASE_URL}/api/posts/${postId}/like_post/`, {
+                const response = await fetch(`${API_BASE_URL}/api/community/posts/${postId}/like_post/`, {
                     method: 'POST',
                     headers: getAuthHeader()
                 });
@@ -508,7 +508,7 @@
             event.stopPropagation();
             
             try {
-                const response = await fetch(`${API_BASE_URL}/api/comments/${commentId}/like_comment/`, {
+                const response = await fetch(`${API_BASE_URL}/api/community/comments/${commentId}/like_comment/`, {
                     method: 'POST',
                     headers: getAuthHeader()
                 });
