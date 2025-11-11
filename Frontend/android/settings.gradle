@@ -1,9 +1,0 @@
-pluginManagement { includeBuild("../node_modules/@react-native/gradle-plugin") }
-plugins { id("com.facebook.react.settings") }
-extensions.configure(com.facebook.react.ReactSettingsExtension){ ex -> ex.autolinkLibrariesFromCommand() }
-rootProject.name = 'GilNabiApp'
-include ':app'
-includeBuild('../node_modules/@react-native/gradle-plugin')
-// 구글 로그인 추가
-// include ':@react-native-google-signin_google-signin'
-// project(':@react-native-google-signin_google-signin').projectDir = new File(rootProject.projectDir, '../node_modules/@react-native-google-signin/google-signin/android')

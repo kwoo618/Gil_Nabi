@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>길나비 관리자</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        h1 { color: #333; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background: #4CAF50;
+            color: white;
+        }
+        tr:hover { background: #f5f5f5; }
+        .delete-btn {
+            background: #f44336;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .delete-btn:hover { background: #da190b; }
+    </style>
+</head>
+<body>
+    <h1>🦋 길나비 관리자 페이지</h1>
+    
+    <h2>사용자 목록</h2>
+    <table id="userTable">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>사용자명</th>
+                <th>닉네임</th>
+                <th>제공자</th>
+                <th>장애유형</th>
+                <th>프로필완료</th>
+                <th>가입일</th>
+                <th>삭제</th>
+            </tr>
+        </thead>
+        <tbody id="userList">
+            <tr><td colspan="8">로딩중...</td></tr>
+        </tbody>
+    </table>
+
+    <script>
+        // 사용자 목록 가져오기
+        async function loadUsers() {
+            try {
+                const response = await fetch('http://localhost:8000/api/users/', {
+                    headers: {
+                        'Authorization': 'Bearer YOUR_ADMIN_TOKEN'
+                    }
+                });
+                const users = await response.json();
+                
+                const tbody = document.getElementById('userList');
+                tbody.innerHTML = '';
+                
+                users.forEach(user => {
+                    const row = `
+                        <tr id="user-${user.id}">
+                            <td>${user.id}</td>
+                            <td>${user.username}</td>
+                            <td>${user.nickname || '미설정'}</td>
+                            <td>${user.provider}</td>
+                            <td>${user.disability_type || '-'}</td>
+                            <td>${user.is_profile_complete ? '✅' : '❌'}</td>
+                            <td>${new Date(user.created_at).toLocaleDateString('ko-KR')}</td>
+                            <td>
+                                <button class="delete-btn" onclick="deleteUser(${user.id}, '${user.username}')">
+                                    삭제
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                    tbody.innerHTML += row;
+                });
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('userList').innerHTML = 
+                    '<tr><td colspan="8">사용자 정보를 불러오는데 실패했습니다.</td></tr>';
+            }
+        }
+
+        // 사용자 삭제
+        async function deleteUser(userId, username) {
+            if (!confirm(`${username} 사용자를 삭제하시겠습니까?`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`http://localhost:8000/api/users/${userId}/`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': 'Bearer YOUR_ADMIN_TOKEN'
+                    }
+                });
+
+                if (response.ok) {
+                    alert('사용자가 삭제되었습니다.');
+                    document.getElementById(`user-${userId}`).remove();
+                } else {
+                    alert('삭제 실패');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('삭제 중 오류가 발생했습니다.');
+            }
+        }
+
+        // 페이지 로드시 사용자 목록 가져오기
+        loadUsers();
+    </script>
+</body>
+</html>

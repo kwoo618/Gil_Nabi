@@ -6,10 +6,21 @@
 # URL과 View를 연결하는 지도
 # 클라이언트가 어떤 URL로 요청하면 어떤 View가 처리할지 정의
 
-from django.urls import path
-from .views import SocialLoginView, CompleteProfileView # LoginView : 소셜 로그인 처리 뷰, CompleteProfileView : 프로필 완성 뷰
-
-urlpatterns = [
-    path('auth/social-login/', SocialLoginView.as_view(), name='social-login'),
-    path('auth/complete-profile/', CompleteProfileView.as_view(), name='complete-profile'),
+from django.urls import path, include
+from .views import (
+    SocialLoginView,
+    CompleteProfileView,
+    HomeView,
+    LogoutView,
+    TokenRefreshView,
+    UserProfileView
+) 
+urlpatterns = [    
+    path('', HomeView.as_view(), name='user_home'),
+    path('auth/', SocialLoginView.as_view(), name='auth'),
+    path('auth/login/', SocialLoginView.as_view(), name='login'),
+    path('auth/login/signup/', CompleteProfileView.as_view(), name='signup'),
+    path('auth/logout/', LogoutView.as_view(), name='logout'), 
+    path('auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('profile/', UserProfileView.as_view(), name='user_profile'),
 ]

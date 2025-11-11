@@ -12,6 +12,11 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+from datetime import timedelta
+import os # os 모듈 import
+from dotenv import load_dotenv # dotenv import
+
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -21,7 +26,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-omg&!wk5hfzu67o2ezo^q=7nl^t2cr&ruwfy=tlyu-31huf#n4"
+SECRET_KEY = os.getenv('SECRET_KEY') # .env 파일에서 SECRET_KEY 값을 읽어옴
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -46,8 +51,16 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    
     "corsheaders", # CORS 허용을 위한 앱
-    "users"
+    "rest_framework_simplejwt", # JWT 
+    "rest_framework",
+    'django_filters',
+
+    "users",
+    'reviews',
+    'community',
+    'places',
 ]
 
 AUTH_USER_MODEL = "users.User"  # '앱이름.모델이름' 형식
@@ -63,15 +76,48 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-CORS_ALLOW_ALL_ORIGINS = True  # 개발 중에만 사용 (배포 시 제거)
-# 뜻 ->  "모든 출처에서 오는 요청 허용해!"
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication' # JWT
+    ], 
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated', # 기본적으로 인증이 필요
+        'rest_framework.permissions.AllowAny' # 개발 중 인증 임시 비활성화
+    ], 
+}
+
+# JWT 상세 설정
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),  # Access Token 30분
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),     # Refresh Token 7일
+    'ROTATE_REFRESH_TOKENS': True,  # Refresh Token 갱신 시 새로 발급
+    'BLACKLIST_AFTER_ROTATION': True,  # 기존 Refresh Token 블랙리스트 처리
+    'AUTH_HEADER_TYPES': ('Bearer',),
+    'USER_ID_FIELD': 'id',
+    'USER_ID_CLAIM': 'user_id',
+}
+
+# Redis 설정 (Refresh Token 저장용)
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': 'redis://127.0.0.1:6379/1',  # Redis 서버 주소
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        }
+    }
+}
+
+CORS_ALLOW_CREDENTIALS = True # 세션 쿠키 전송 허용
+
+CORS_ALLOW_ALL_ORIGINS = True  # 개발 중에만 사용 (배포 시 제거) 
 
 ROOT_URLCONF = "config.urls"
 
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        'DIRS': [BASE_DIR / 'test'],  # 테스트용 html 파일 위치
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -91,12 +137,12 @@ WSGI_APPLICATION = "config.wsgi.application"
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',   # PostgreSQL 사용
-        'NAME': 'gilnabi_db',                          # 데이터베이스 이름
-        'USER': 'postgres',                          # DB 사용자
-        'PASSWORD': 'qwer1234',                      # DB 비밀번호
-        'HOST': 'localhost',                         # DB 서버 주소
-        'PORT': '5432',                              # DB 포트
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'gilnabi_db',      # 1단계에서 만든 데이터베이스 이름
+        'USER': 'postgres',         # PostgreSQL 설치 시 설정한 사용자 이름
+        'PASSWORD': os.getenv('DATABASE_PASSWORD'),     # PostgreSQL 설치 시 설정한 비밀번호
+        'HOST': 'localhost',        # 보통 localhost 또는 127.0.0.1 입니다.
+        'PORT': '5432',             # PostgreSQL 기본 포트
     }
 }
 
@@ -136,6 +182,13 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = "static/"
+STATICFILES_DIRS = [
+    BASE_DIR / 'test',
+]
+
+STATICFILES_DIRS = [
+    BASE_DIR / "static", # Backend/static 폴더를 지정
+]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
