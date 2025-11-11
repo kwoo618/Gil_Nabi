@@ -221,6 +221,20 @@
         .write-review-btn:hover {
             background: #5568d3;
         }
+
+        /* AI 마커 오버레이 스타일 */
+        .marker-overlay {
+            background: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            font-weight: bold;
+            text-align: center;
+        }
+        .marker-overlay.excellent { background: #4CAF50; color: white; }
+        .marker-overlay.good { background: #FFC107; color: white; }
+        .marker-overlay.normal { background: #F44336; color: white; }
+
     </style>
 </head>
 <body>
@@ -238,9 +252,32 @@
     <div id="map"></div>
 
     <div id="controls">
-        <input type="text" id="search-input" placeholder="장소 검색">
-        <button id="search-btn">검색</button>
-        <button id="show-db-btn">DB 데이터 보기</button>
+        <div class="search-section" style="margin-bottom: 10px;">
+            <input type="text" id="search-input" placeholder="장소 검색">
+            <button id="search-btn">검색</button>
+            <button id="show-db-btn">DB 데이터 보기</button>
+            <button id="current-location-btn" style="background: #4CAF50;">📍 내 위치</button>
+        </div>
+        <!-- AI 추천 섹션 추가 -->
+        <div class="ai-section" style="margin-bottom: 10px;">
+            <button id="ai-recommend-btn" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">
+                🤖 AI 추천 (Top 5)
+            </button>
+            <label style="margin-left: 10px;">
+                <input type="checkbox" id="auto-refresh"> 지도 이동 시 자동 갱신
+            </label>
+        </div>
+        
+        <!-- 필터링 섹션 추가 -->
+        <div class="filter-section" style="display: flex; gap: 10px; align-items: center;">
+            <span>필터:</span>
+            <label><input type="checkbox" id="filter-ramp"> 경사로</label>
+            <label><input type="checkbox" id="filter-wheelchair"> 휠체어</label>
+            <label><input type="checkbox" id="filter-toilet"> 장애인화장실</label>
+            <label><input type="checkbox" id="filter-elevator"> 엘리베이터</label>
+            <button id="apply-filter-btn" style="background: #667eea; color: white; padding: 8px 16px; border: none; border-radius: 8px; cursor: pointer;">필터 적용</button>
+            <button id="clear-filter-btn" style="background: #999; color: white; padding: 8px 16px; border: none; border-radius: 8px; cursor: pointer;">초기화</button>
+        </div>
     </div>
 
     <div id="place-info">
