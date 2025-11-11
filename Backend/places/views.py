@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import ensure_csrf_cookie
 from .models import Accessibility
 from .serializers import AccessibilitySerializer
@@ -60,7 +61,7 @@ class AccessibilityListAPI(ListCreateAPIView):
     filterset_fields = ['id']
 
     # 조회는 아무나 할 수 있지만, 생성은 로그인 필요
-    permission_classes = [AllowAny] # 임시 비활성화
+    permission_classes = [IsAuthenticatedOrReadOnly] # 임시 비활성화
 
     def get_queryset(self):
         queryset = Accessibility.objects.all()
@@ -85,8 +86,7 @@ class AccessibilityDetailAPI(RetrieveUpdateDestroyAPIView):
     lookup_field = 'id'
 
     # 조회는 누구나 할 수 있지만, 수정 / 삭제는 로그인 필요 
-    permission_classes = [AllowAny] # 임시 비활성화
-
+    permission_classes = [IsAuthenticatedOrReadOnly] # 임시 비활성화
 
 def show_map(request):
     places_queryset = Accessibility.objects.all()

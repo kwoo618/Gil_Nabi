@@ -1,6 +1,7 @@
 
 const API_BASE_URL = 'http://localhost:8000';
 // kakao.maps.load(): 카카오맵 SDK 로딩 및 초기화가 완료되면 이 함수 안의 코드를 실행합니다.
+
 kakao.maps.load(function() {
 
     // --- ✨ 검색 반경 설정 변수 ---
@@ -340,12 +341,12 @@ kakao.maps.load(function() {
         const placeId = String(currentPlaceData.id);
 
         try {
+            const authHeaders = getAuthHeaders();
+            authHeaders['X-CSRFToken'] = getCSRFToken();
+
             const response = await fetch(`/api/places/${placeId}/`, {
                 method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': getCSRFToken()
-                },
+                headers: authHeaders,  
                 body: JSON.stringify(updateData)
             });
             if (response.ok) {
@@ -394,12 +395,12 @@ kakao.maps.load(function() {
 
         console.log("백엔드로 전송할 데이터 (신규):", data);
         try {
+            const authHeaders = getAuthHeaders();
+            authHeaders['X-CSRFToken'] = getCSRFToken();
+
             const response = await fetch('/api/places/', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': getCSRFToken()
-                },
+                headers: authHeaders,  // ← 여기!
                 body: JSON.stringify(data)
             });
             if (response.ok) {
@@ -447,6 +448,19 @@ kakao.maps.load(function() {
             });
         }
         return csrftoken;
+    }
+    // --- 인증 헤더 생성 함수 (추가) ---
+    function getAuthHeaders() {
+        const token = localStorage.getItem('access_token');
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+    
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+    
+        return headers;
     }
 
     // --- DB 데이터 보기 버튼 이벤트 리스너 ---

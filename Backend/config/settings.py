@@ -82,7 +82,7 @@ REST_FRAMEWORK = {
     ], 
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated', # 기본적으로 인증이 필요
-        'rest_framework.permissions.AllowAny' # 개발 중 인증 임시 비활성화
+        # 'rest_framework.permissions.AllowAny' # 개발 중 인증 임시 비활성화
     ], 
 }
 
