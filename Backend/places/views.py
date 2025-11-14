@@ -10,7 +10,7 @@ import os
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .recommendation import RecommendationEngine
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
 
 # AI 추천 기능 추가
 from .ai_recommendation import AIRecommendationSystem
@@ -152,13 +152,9 @@ class AccessibilityListAPI(ListCreateAPIView):
     serializer_class = AccessibilitySerializer
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['id']
-<<<<<<< HEAD
 
     # 조회는 아무나 할 수 있지만, 생성은 로그인 필요
     permission_classes = [IsAuthenticatedOrReadOnly] # 임시 비활성화
-=======
-    permission_classes = [AllowAny]
->>>>>>> merger_branch
 
     def get_queryset(self):
         queryset = Accessibility.objects.all()
@@ -177,13 +173,9 @@ class AccessibilityDetailAPI(RetrieveUpdateDestroyAPIView):
     queryset = Accessibility.objects.all()
     serializer_class = AccessibilitySerializer
     lookup_field = 'id'
-<<<<<<< HEAD
 
     # 조회는 누구나 할 수 있지만, 수정 / 삭제는 로그인 필요 
     permission_classes = [IsAuthenticatedOrReadOnly] # 임시 비활성화
-=======
-    permission_classes = [AllowAny]
->>>>>>> merger_branch
 
 def show_map(request):
     places_queryset = Accessibility.objects.all()
