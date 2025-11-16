@@ -49,13 +49,19 @@ class SocialLoginView(APIView):
         # Google API 호출
         elif provider == 'google':
             user_info = requests.get(
-                'https://www.googleapis.com/oauth2/v2/userinfo',
-                headers={'Authorization': f'Bearer {access_token}'}
-            ).json() # JSON 응답
-            social_id = user_info.get('id')                         # 구글 고유 ID
-            username = user_info.get('name', 'GoogleUser')          # 닉네임, 없으면 기본값 "GoogleUser"
-            profile_image = user_info.get('picture')                # 프로필 이미지 URL
+                f'https://www.googleapis.com/oauth2/v3/tokeninfo?id_token={access_token}'
+            ).json()
 
+            if 'error' in user_info or not user_info.get('sub'):
+                return Response({
+                    'error': 'Google ID 토큰이 유효하지 않습니다.',
+                    'detail': user_info
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            social_id = user_info.get('sub')
+
+            username = user_info.get('name', 'GoogleUser')
+            profile_image = user_info.get('picture')
         # DB에 사용자 정보 저장 (없으면 새로 생성)
             # DB에 이미 있는 사용자 조회 
         user, created = User.objects.get_or_create(
@@ -67,7 +73,7 @@ class SocialLoginView(APIView):
          # JWT 토큰 생성
         refresh = RefreshToken.for_user(user)
         access_token = str(refresh.access_token)
-        refresh = str(refresh)
+        refresh_token = str(refresh) 
 
         # Refresh Token을 Redis에 저장 (7일 만료)
         cache.set(
@@ -103,7 +109,7 @@ class SocialLoginView(APIView):
                 'https://kauth.kakao.com/oauth/token',  
                 data={  # !!! 배포할때는 키값들 env로 변경해서 호출 !!!
                     'grant_type': 'authorization_code',
-                    'client_id': os.getenv('KAKAO_CLIENT_ID'),  # 카카오 REST API
+                    'client_id': os.getenv('KAKAO_RESTAPI_KEY'),  # 카카오 REST API
                     'redirect_uri': 'http://localhost:8000/users/auth/login/',  # 카카오 리다이렉트 URI
                     'code': code,
                 }
@@ -156,8 +162,21 @@ class SocialLoginView(APIView):
                 'https://www.googleapis.com/oauth2/v2/userinfo',
                 headers={'Authorization': f'Bearer {access_token}'}
             ).json()
+
+            if 'error' in user_info:
+                return Response({
+                    'error': 'Google 사용자 정보 조회에 실패했습니다.',
+                    'detail': user_info
+                }, status=status.HTTP_400_BAD_REQUEST)
         
-            social_id = user_info.get('id')
+            social_id = user_info.get('sub') or user_info.get('id')
+
+            if not social_id: 
+                return Response({
+                    'error': 'Google 응답에서 social_id를 찾을 수 없습니다.', 
+                    'detail': user_info 
+                }, status=status.HTTP_400_BAD_REQUEST)
+
             username = user_info.get('name', 'GoogleUser')
             profile_image = user_info.get('picture')
 

@@ -19,7 +19,10 @@ class UserSerializer(serializers.ModelSerializer):
     """ DB User 모델 기반 로그인 성공 후, 클라이언트에 반환할 사용자 정보 """
     class Meta: # 메타 정보 설정 
         model = User # User 모델 사용 
-        fields = ['id', 'social_id', 'provider', 'username', 'profile_image']  # 클라이언트에 보내줄 정보
+        fields = ['id', 'social_id', 'provider', 
+        'username', 'profile_image', 'nickname',
+        'disability_type', 'has_wheelchair', 'is_profile_complete'
+        ]  # 클라이언트에 보내줄 정보
 
 # 소셜 로그인 검증용 시리얼라이저
 class SocialLoginSerializer(serializers.Serializer):
