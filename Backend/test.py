@@ -1,58 +1,57 @@
-# test_claude.py
+# fix_review_connection.py
+"""
+리뷰와 장소 연결 완전 수정
+"""
+
 import os
-import sys
 import django
 
-# Django 설정
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 django.setup()
 
-from ai_service.claude_client import ClaudeClient
+from reviews.models import Review
+from places.models import Accessibility
+from django.db import connection
 
-def test_claude_api():
-    print("="*50)
-    print("Claude API 테스트 시작")
-    print("="*50)
+def fix_all_reviews():
+    print("=" * 50)
+    print("리뷰 연결 수정 시작")
+    print("=" * 50)
     
-    client = ClaudeClient()
+    # 직접 SQL로 업데이트
+    with connection.cursor() as cursor:
+        # 모든 리뷰의 place_id 확인
+        cursor.execute("""
+            SELECT r.id, r.place_id, a.building_name
+            FROM reviews r
+            LEFT JOIN places_accessibility a ON r.place_id = a.id
+            WHERE a.id IS NULL
+        """)
+        
+        unmatched = cursor.fetchall()
+        print(f"연결 안 된 리뷰: {len(unmatched)}개")
+        
+        if unmatched:
+            # 첫 번째 장소 가져오기
+            first_place = Accessibility.objects.first()
+            if first_place:
+                # 연결 안 된 리뷰를 첫 번째 장소로 업데이트
+                cursor.execute("""
+                    UPDATE reviews 
+                    SET place_id = %s 
+                    WHERE place_id NOT IN (SELECT id FROM places_accessibility)
+                """, [first_place.id])
+                
+                print(f"✅ {len(unmatched)}개 리뷰를 {first_place.building_name}으로 재연결")
     
-    # 1. 연결 테스트
-    print("\n1. 연결 테스트...")
-    success, message = client.test_connection()
-    if success:
-        print(f"✅ 연결 성공: {message}")
-    else:
-        print(f"❌ 연결 실패: {message}")
-        return
-    
-    # 2. 긍정적 리뷰 테스트
-    print("\n2. 긍정적 리뷰 분석...")
-    positive_review = "이 카페 정말 좋아요! 직원분들도 친절하시고 휠체어로 들어가기도 편했어요."
-    success, result = client.analyze_review_sentiment(positive_review)
-    if success:
-        print(f"✅ 분석 성공:")
-        print(f"   - 점수: {result.get('sentiment_score')}/100")
-        print(f"   - 감성: {result.get('sentiment')}")
-        print(f"   - 포인트: {result.get('key_points')}")
-    else:
-        print(f"❌ 분석 실패: {result}")
-    
-    # 3. 부정적 리뷰 테스트
-    print("\n3. 부정적 리뷰 분석...")
-    negative_review = "접근성이 너무 안 좋아요. 계단만 있고 도움도 안 줬어요."
-    success, result = client.analyze_review_sentiment(negative_review)
-    if success:
-        print(f"✅ 분석 성공:")
-        print(f"   - 점수: {result.get('sentiment_score')}/100")
-        print(f"   - 감성: {result.get('sentiment')}")
-        print(f"   - 포인트: {result.get('key_points')}")
-    else:
-        print(f"❌ 분석 실패: {result}")
-    
-    print("\n" + "="*50)
-    print("테스트 완료!")
-    print("="*50)
+    # 결과 확인
+    print("\n장소별 리뷰 현황:")
+    for place in Accessibility.objects.all()[:10]:
+        count = Review.objects.filter(place_id=place.id).count()
+        if count > 0:
+            from django.db.models import Avg
+            avg = Review.objects.filter(place_id=place.id).aggregate(Avg('rating'))['rating__avg']
+            print(f"  {place.building_name}: {count}개 (평균 {avg:.1f}점)")
 
 if __name__ == "__main__":
-    test_claude_api()
+    fix_all_reviews()

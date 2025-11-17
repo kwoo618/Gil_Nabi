@@ -33,6 +33,13 @@ class Review(models.Model):
         ],
         verbose_name='별점'
     )
+
+    sentiment_score = models.IntegerField(
+        null=True, 
+        blank=True, 
+        verbose_name='AI 감성 점수',
+        help_text='0(부정) ~ 100(긍정) 사이의 AI 분석 점수'
+    )
     
     disability_type = models.CharField(
         max_length=50,

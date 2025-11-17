@@ -9,7 +9,20 @@ from django.db.models import Avg, Count
 from .models import Review 
 
 from .serializers import ReviewSerializer, ReviewListSerializer, ReviewCreateSerializer
+from rest_framework.generics import ListCreateAPIView
 
+class ReviewListAPI(ListCreateAPIView):
+    """리뷰 목록 조회"""
+    queryset = Review.objects.all()
+    serializer_class = ReviewSerializer
+    permission_classes = [AllowAny]
+    
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        place_id = self.request.query_params.get('place_id')
+        if place_id:
+            queryset = queryset.filter(place__id=place_id)
+        return queryset
 
 class ReviewViewSet(viewsets.ModelViewSet):
     """리뷰에 대한 모든 CRUD 작업을 처리하는 ViewSet"""

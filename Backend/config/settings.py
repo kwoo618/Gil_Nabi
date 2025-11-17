@@ -27,7 +27,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv('SECRET_KEY') # .env 파일에서 SECRET_KEY 값을 읽어옴
-
+CLAUDE_API_KEY = os.getenv('CLAUDE_API_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
@@ -117,7 +117,11 @@ ROOT_URLCONF = "config.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        'DIRS': [BASE_DIR / 'test'],  # 테스트용 html 파일 위치
+        'DIRS': [
+            BASE_DIR / 'test',
+            BASE_DIR / 'templates', 
+            ],
+            # 테스트용 html 파일 위치
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -194,3 +198,8 @@ STATICFILES_DIRS = [
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
+]
