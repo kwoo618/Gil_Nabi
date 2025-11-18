@@ -20,7 +20,6 @@ class AccessibilitySerializer(serializers.ModelSerializer):
                 validated_data[field] = None
         return super().create(validated_data)
 
-# ✨ 이 클래스가 꼭 있어야 합니다!
 class AIRecommendationSerializer(serializers.Serializer):
     place = AccessibilitySerializer()
     ai_score = serializers.FloatField()

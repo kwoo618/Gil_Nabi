@@ -1,4 +1,4 @@
-// map_markers.js - 마커 관리
+// static/js/map_markers.js - 마커 관리
 const mapMarkers = {
     currentMarker: null,
     
@@ -38,7 +38,6 @@ const mapMarkers = {
         this.currentMarker = marker;
         mapMain.markers.push(marker);
         
-        // 클릭 이벤트
         kakao.maps.event.addListener(marker, 'click', function() {
             mapInfo.showPlaceInfo(place, marker);
         });
@@ -96,28 +95,24 @@ const mapMarkers = {
         mapMain.markers.push(marker);
     },
     
-    addAIMarker: function(place, rank) {
+    addAIMarker: function(place, rank) { // rank는 안 쓰지만 호환성을 위해 인자는 남겨둠
         const position = new kakao.maps.LatLng(
             place.position.lat,
             place.position.lng
         );
         
-        // 순위별 마커 이미지 변경 (선택사항, 여기선 기본 마커 사용)
-        // const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#ffeaa7'];
-        // const color = colors[rank - 1] || '#95a5a6';
-        
-        // ✨ 오버레이 생성 코드 삭제됨
-        
-        // 마커 생성
+        // ✨ 수정됨: 숫자 오버레이 삭제하고 기본 마커 사용
         const marker = new kakao.maps.Marker({
             position: position,
             map: mapMain.map
+            // opacity: 0  <-- 삭제 (마커가 보이도록 설정)
         });
         
         kakao.maps.event.addListener(marker, 'click', function() {
+            // ✨ 수정됨: 정보창 제목에서 순위 제거 ('AI 추천 장소'로 변경)
             const content = `
                 <div style="padding:15px;">
-                    <h4>🏆 AI 추천 ${rank}위</h4>
+                    <h4>🤖 AI 추천 장소</h4>
                     <strong>${place.building_name}</strong><br>
                     <div style="margin:10px 0;">
                         ⭐ ${place.score}점 | 리뷰 ${place.review_count}개
@@ -127,9 +122,6 @@ const mapMarkers = {
                         ${place.accessibility.has_elevator ? '✅' : '❌'} 엘리베이터<br>
                         ${place.accessibility.has_ramp ? '✅' : '❌'} 경사로<br>
                         ${place.accessibility.accessible_toilet ? '✅' : '❌'} 화장실
-                    </div>
-                    <div style="margin-top:5px; font-size:11px; color:#666;">
-                        ${place.ai_reason}
                     </div>
                 </div>
             `;

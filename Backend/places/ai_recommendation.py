@@ -1,8 +1,10 @@
+# Backend/places/ai_recommendation.py
+
 import os
 import json
 import anthropic
 from django.conf import settings
-from django.db.models import Avg, Count
+from django.db.models import Avg
 from reviews.models import Review
 from .models import Accessibility
 
@@ -10,6 +12,7 @@ class AIRecommendationSystem:
     """Claude AI 기반 추천 시스템"""
     
     def __init__(self):
+        # API 키 로드
         api_key = getattr(settings, 'CLAUDE_API_KEY', None)
         if api_key:
             self.client = anthropic.Anthropic(api_key=api_key)
@@ -19,24 +22,25 @@ class AIRecommendationSystem:
 
     def get_ai_recommendations(self, user, map_bounds, limit=5):
         """
-        1. 지도 범위 내 장소 필터링
+        1. 지도 범위 및 필터로 장소 1차 검색
         2. 후보 장소들의 리뷰 데이터 수집
         3. Claude AI에게 분석 요청
         4. 결과 반환
         """
         
         # --- 1. 후보 장소 필터링 ---
+        # views.py에서 map_bounds 안에 filters를 합쳐서 보내줍니다.
+        filters = map_bounds.get('filters', {})
+        
+        # 지도 범위 내 장소 검색
         places = Accessibility.objects.filter(
             latitude__gte=map_bounds.get('south', 35.88),
             latitude__lte=map_bounds.get('north', 35.91),
             longitude__gte=map_bounds.get('west', 128.84),
             longitude__lte=map_bounds.get('east', 128.87)
         )
-        
-        places = Accessibility.objects.filter(...)
 
-        # ✨ 2. 접근성 필터 적용 (프론트엔드에서 보낸 filters 사용)
-        filters = map_bounds.get('filters', {})
+        # 필터 조건 적용 (체크된 항목만 필터링)
         if filters.get('wheelchair'):
             places = places.filter(wheelchair=True)
         if filters.get('has_elevator'):
@@ -46,13 +50,14 @@ class AIRecommendationSystem:
         if filters.get('accessible_toilet'):
             places = places.filter(accessible_toilet=True)
 
-        # 사용자 필수 조건 필터링 (User 모델에 필드가 있을 경우)
-        if hasattr(user, 'has_wheelchair') and user.has_wheelchair:
+        # 사용자 프로필 기반 필수 조건 (예: 휠체어 사용자)
+        if getattr(user, 'has_wheelchair', False):
             places = places.filter(wheelchair=True)
         
         # --- 2. 리뷰 데이터 수집 ---
         candidate_places = []
         for place in places:
+            # 최신 리뷰 5개 가져오기
             reviews = Review.objects.filter(place=place).order_by('-created_at')[:5]
             
             if reviews.exists():
@@ -63,12 +68,12 @@ class AIRecommendationSystem:
                     'avg_rating': avg_rating
                 })
         
-        # 평점 순 정렬 후 상위 8개 선택
+        # 평점 순으로 정렬하여 상위 8개만 AI에게 보냄 (속도/비용 최적화)
         candidate_places.sort(key=lambda x: x['avg_rating'], reverse=True)
         target_candidates = candidate_places[:8] 
 
         if not target_candidates:
-            return [] 
+            return [] # 조건에 맞는 장소가 없음
 
         # --- 3. AI 분석 요청 ---
         ai_results = []
@@ -77,7 +82,6 @@ class AIRecommendationSystem:
                 ai_results = self._ask_claude(user, target_candidates)
             except Exception as e:
                 print(f"🔥 AI 호출 실패: {e}")
-                # AI 실패 시 Fallback 실행
                 return self._fallback_result(target_candidates, limit)
         else:
             return self._fallback_result(target_candidates, limit)
@@ -89,24 +93,25 @@ class AIRecommendationSystem:
              return self._fallback_result(target_candidates, limit)
 
         for res in ai_results[:limit]:
+            # AI가 반환한 ID로 장소 객체 찾기
             target_place = next((p for p in target_candidates if str(p['obj'].id) == str(res.get('id'))), None)
             
             if target_place:
                 place_obj = target_place['obj']
                 final_recommendations.append({
                     'place': place_obj,
-                    # ✨ 수정됨: Serializer 필드명(ai_score)과 일치시킴
                     'ai_score': res.get('score', 0), 
                     'review_count': len(target_place['reviews']),
                     'avg_rating': target_place['avg_rating'],
                     'ai_reason': res.get('reason', '')
                 })
 
+        # 점수 높은 순 정렬
         final_recommendations.sort(key=lambda x: x['ai_score'], reverse=True)
         return final_recommendations
 
     def _ask_claude(self, user, candidates):
-        """Claude에게 프롬프트 전송"""
+        """Claude에게 프롬프트를 보내고 JSON 응답을 받음"""
         
         disability_type = getattr(user, 'disability_type', '미설정')
         has_wheelchair = getattr(user, 'has_wheelchair', False)
@@ -115,6 +120,7 @@ class AIRecommendationSystem:
         if has_wheelchair:
             user_info_str += ", 휠체어 사용함"
 
+        # 데이터 JSON 변환
         places_data_for_ai = []
         for item in candidates:
             places_data_for_ai.append({
@@ -155,13 +161,9 @@ class AIRecommendationSystem:
         ]
         """
 
-        # ✨ 수정됨: 모델명을 안정적인 버전으로 변경 (Claude 3 Sonnet)
-        # 만약 Claude 3.5 Sonnet을 쓰고 싶다면 'claude-3-5-sonnet-20240620'을 다시 시도해보세요.
-        # 하지만 404 에러가 계속되면 아래 모델을 사용하세요.
-        model_name = "claude-3-sonnet-20240229" 
-
+        # API 호출
         message = self.client.messages.create(
-            model=model_name,
+            model="claude-3-5-sonnet-20240620", # 또는 "claude-3-sonnet-20240229"
             max_tokens=1000,
             temperature=0,
             messages=[
@@ -182,7 +184,6 @@ class AIRecommendationSystem:
         for item in candidates[:limit]:
             results.append({
                 'place': item['obj'],
-                # ✨ 수정됨: Serializer 필드명(ai_score)과 일치시킴
                 'ai_score': item['avg_rating'] * 20, 
                 'review_count': len(item['reviews']),
                 'avg_rating': item['avg_rating'],

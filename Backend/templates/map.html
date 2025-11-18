@@ -266,13 +266,9 @@
     </div>
     
     <div id="map"></div>
-    <div class="map-info" id="map-info">
-        모드: <span id="current-mode">일반</span> | 
-        마커: <span id="marker-count">0</span>개
-    </div>
     
     <!-- Kakao Maps API -->
-    <script src="//dapi.kakao.com/v2/maps/sdk.js?appkey=508b2ac52c84b32d74cb1b0f82492118&libraries=services"></script>
+    <script src="//dapi.kakao.com/v2/maps/sdk.js?appkey={{ kakao_map_key }}&libraries=services"></script>
     
     <!-- 모듈 JS 파일들 (순서 중요!) -->
     <script src="/static/js/map_main.js"></script>
@@ -283,113 +279,7 @@
     <script src="/static/js/map_ui.js"></script>
     <script src="/static/js/map_info.js"></script>
     <script src="/static/js/map_ai.js"></script>
-    
-    <!-- map_ai.js 파일 내용 문제로 인라인으로 정의 -->
-    <!-- <script>
-        // mapAI 객체를 직접 정의 (map_ai.js 파일 문제 해결용)
-// templates/test_gil.html의 mapAI 부분 수정
-window.mapAI = {
-    getRecommendation: async function() {
-        console.log('[AI] 추천 시작');
-        
-        const token = localStorage.getItem('access_token');
-        
-        if (!token) {
-            if (confirm('로그인이 필요합니다. 로그인 페이지로 이동하시겠습니까?')) {
-                window.location.href = '/users/';
-            }
-            return;
-        }
-        
-        mapUI.showLoading('AI 분석 중...');
-        
-        try {
-            const params = {
-                map_bounds: mapMain.getMapBounds(),
-                filters: mapMain.currentFilters,  // 필터 추가!
-                limit: 5
-            };
-            
-            console.log('[AI] 필터 포함 요청:', params);
-            
-            const response = await fetch('/api/places/ai-recommend/', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(params)
-            });
-            
-            const data = await response.json();
-            console.log('[AI] 응답:', data);
-            
-            if (data.success && data.markers && data.markers.length > 0) {
-                mapMarkers.clearAll();
-                
-                data.markers.forEach((place, index) => {
-                    const position = new kakao.maps.LatLng(
-                        place.position.lat,
-                        place.position.lng
-                    );
-                    
-                    // 일반 마커만 (숫자 제거)
-                    const marker = new kakao.maps.Marker({
-                        position: position,
-                        map: mapMain.map
-                    });
-                    
-                    mapMain.markers.push(marker);
-                    
-                    // 클릭 이벤트
-                    kakao.maps.event.addListener(marker, 'click', function() {
-                        const content = `
-                            <div style="padding:15px; min-width:250px;">
-                                <h4>🏆 ${index + 1}위 추천</h4>
-                                <strong>${place.building_name}</strong><br>
-                                <div style="margin:10px 0;">
-                                    ⭐ ${place.score}점 | 리뷰 ${place.review_count}개
-                                </div>
-                            </div>
-                        `;
-                        
-                        mapMain.infowindow.setContent(content);
-                        mapMain.infowindow.open(mapMain.map, marker);
-                    });
-                });
-                
-                mapUI.showAIResults(data.markers, data.user_info || {});
-                
-                if (data.markers[0]) {
-                    mapMain.map.panTo(new kakao.maps.LatLng(
-                        data.markers[0].position.lat,
-                        data.markers[0].position.lng
-                    ));
-                }
-            } else {
-                mapUI.showMessage('AI 추천 결과가 없습니다');
-            }
-        } catch (error) {
-            console.error('[AI] 오류:', error);
-            mapUI.showMessage('AI 추천을 가져올 수 없습니다');
-        }
-    }
-};
-        // 테스트용 함수
-        function testAI() {
-            if (typeof mapAI !== 'undefined' && mapAI.getRecommendation) {
-                mapAI.getRecommendation();
-            } else {
-                console.error('mapAI가 정의되지 않음');
-            }
-        }
-        
-        // 디버깅용
-        console.log('✅ mapAI 인라인 정의 완료');
-    </script> -->
-    
-    <!-- map_ai.js는 일단 제외 (위에서 인라인으로 정의함) -->
-    <!-- <script src="/static/js/map_ai.js"></script> -->
+
     
     <script src="/static/js/debug_helper.js"></script>
     
