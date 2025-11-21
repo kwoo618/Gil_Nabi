@@ -5,6 +5,8 @@ from rest_framework.exceptions import NotFound
 from django.shortcuts import get_object_or_404
 from django.db.models import F
 
+from datetime import datetime, timedelta, timezone # 날짜 계산
+
 from .models import Post, Comment, PostLike, CommentLike
 from .serializers import (
     PostListSerializer, 
@@ -13,6 +15,8 @@ from .serializers import (
     CommentSerializer, 
     CommentCreateSerializer
 )
+
+
 
 
 class PostViewSet(viewsets.ModelViewSet):
@@ -41,21 +45,44 @@ class PostViewSet(viewsets.ModelViewSet):
             return PostCreateSerializer
         return super().get_serializer_class()
 
+    def get_serializer(self, *args, **kwargs):
+        # Serializer에 request context 전달 좋아요 토글을 프론트에 전달하기 위해 
+        serializer_class = self.get_serializer_class()
+        kwargs.setdefault('context', self.get_serializer_context())
+        return serializer_class(*args, **kwargs)
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
+
     def retrieve(self, request, *args, **kwargs):
         """
         상세 조회 시, 조회수(view_count) 1 증가
         - F() 표현식을 사용해 race condition을 방지합니다.
         """
         instance = self.get_object()
-        
+
+        cookie_name = f'post_view_{instance.pk}'
+
+        if cookie_name not in request.COOKIES:
         # F()를 사용해 현재 DB 값을 기준으로 1 증가
-        Post.objects.filter(pk=instance.pk).update(view_count=F('view_count') + 1)
-        
-        # 업데이트된 인스턴스를 다시 가져옴
-        instance.refresh_from_db() 
+            Post.objects.filter(pk=instance.pk).update(view_count=F('view_count') + 1)
+            instance.refresh_from_db() # 업데이트된 인스턴스를 다시 가져옴 (새로고침)
         
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
+
+        if cookie_name not in request.COOKIES:
+            # 하루 뒤(24시간) 만료 하도록 
+            expires = datetime.now() + timedelta(days=1) 
+            response.set_cookie(
+                key=cookie_name,
+                value='true',
+                expires=expires,
+                httponly=True
+            )
+        return response
 
     def create(self, request, *args, **kwargs):
         """게시글 생성 (reviews 앱 스타일)"""
@@ -112,18 +139,33 @@ class PostViewSet(viewsets.ModelViewSet):
         post = self.get_object()
         user = request.user
 
+        # 좋아요 상태와 개수를 담을 변수 
+        if_liked = False 
+
         try:
+            # 이미 좋아요 존재하면 -> 취소
             like = PostLike.objects.get(post=post, user=user)
-            # 존재하면 -> 삭제
             like.delete()
+
+            # DB에 반영 (-1)
             Post.objects.filter(pk=post.pk).update(like_count=F('like_count') - 1)
-            return Response({"detail": "좋아요가 취소되었습니다."}, status=status.HTTP_204_NO_CONTENT)
+            is_liked = False
 
         except PostLike.DoesNotExist:
-            # 존재하지 않으면 -> 생성
+            # 좋아요 존재하지 않으면 -> 생성
             PostLike.objects.create(post=post, user=user)
+
+            # DB에 반영 (+1)
             Post.objects.filter(pk=post.pk).update(like_count=F('like_count') + 1)
-            return Response({"detail": "좋아요를 눌렀습니다."}, status=status.HTTP_201_CREATED)
+            is_liked = True
+        
+        # DB에서 계산된 최신 값을 가져오기 (새로고침)
+        post.refresh_from_db()
+
+        return Response({
+            "likes": post.like_count,
+            "isLiked": is_liked
+        }, status=status.HTTP_200_OK)
 
 
 class CommentViewSet(viewsets.ModelViewSet):
