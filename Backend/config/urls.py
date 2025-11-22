@@ -3,16 +3,18 @@ from django.urls import path, include # import : Django에서 URL을 관리할 �
 from django.conf import settings  # html 테스트
 from django.conf.urls.static import static  # html 테스트
 from django.views.generic import TemplateView
-from places.views import show_map
+from places.views import show_map, test_page
 
 urlpatterns = [
     path('admin/', admin.site.urls),
 
     # API 
     path('users/', include('users.urls')),  # Users 앱의 URL 포함
-    path('api/reviews/', include('reviews.urls')), # Reviews 앱의 URL 포함
+    path('api/reviews/', include('reviews.urls')),
     path('api/places/', include('places.urls')),
     path('api/community/', include('community.urls')),
+    # path('test/', test_page),  # 직접 연결
+
 
 
     # 테스트용 프론트엔드 
@@ -23,6 +25,8 @@ urlpatterns = [
     path('map/', show_map, name='show-map'),
     path('reviews/', TemplateView.as_view(template_name='reviews.html'), name='review_page'),
     path('community/', TemplateView.as_view(template_name='community.html'), name='community_page'),
+
+    path('map/', show_map, name='map'),
 ]
 
 if settings.DEBUG:

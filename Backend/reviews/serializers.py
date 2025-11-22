@@ -39,6 +39,7 @@ class ReviewListSerializer(serializers.ModelSerializer):
         model = Review
         fields = [
             'id',
+            'place',     
             'place_name',
             'user',
             'nickname',
@@ -47,7 +48,6 @@ class ReviewListSerializer(serializers.ModelSerializer):
             'disability_type',
             'created_at'
         ]
-
     def get_nickname(self, obj):
         """닉네임 또는 username 반환"""
         return obj.user.nickname

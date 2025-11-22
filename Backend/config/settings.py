@@ -27,7 +27,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv('SECRET_KEY') # .env 파일에서 SECRET_KEY 값을 읽어옴
-
+CLAUDE_API_KEY = os.getenv('CLAUDE_API_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
@@ -82,14 +82,14 @@ REST_FRAMEWORK = {
     ], 
     
     'DEFAULT_PERMISSION_CLASSES': [
-        # 'rest_framework.permissions.IsAuthenticated', # 기본적으로 인증이 필요
-        'rest_framework.permissions.AllowAny' # 개발 중 인증 임시 비활성화
+        'rest_framework.permissions.IsAuthenticated', # 기본적으로 인증이 필요
+        # 'rest_framework.permissions.AllowAny' # 개발 중 인증 임시 비활성화
     ], 
 }
 
 # JWT 상세 설정
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),  # Access Token 30분
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=180),  # Access Token 30분
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),     # Refresh Token 7일
     'ROTATE_REFRESH_TOKENS': True,  # Refresh Token 갱신 시 새로 발급
     'BLACKLIST_AFTER_ROTATION': True,  # 기존 Refresh Token 블랙리스트 처리
@@ -118,7 +118,11 @@ ROOT_URLCONF = "config.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        'DIRS': [BASE_DIR / 'test'],  # 테스트용 html 파일 위치
+        'DIRS': [
+            BASE_DIR / 'test',
+            BASE_DIR / 'templates', 
+            ],
+            # 테스트용 html 파일 위치
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -195,3 +199,8 @@ STATICFILES_DIRS = [
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
+]

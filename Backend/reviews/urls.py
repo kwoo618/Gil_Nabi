@@ -5,6 +5,7 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter 
 
 from .views import ReviewViewSet
+from .views import ReviewListAPI
 
 router = DefaultRouter()
 router.register(r'', ReviewViewSet, basename='review')
@@ -21,4 +22,5 @@ urlpatterns = [
     #   DELETE /api/reviews/{id}/         -> destroy (삭제)
     #   GET    /api/reviews/my_reviews/   -> my_reviews (커스텀 액션)
     path('', include(router.urls)),
+    path('', ReviewListAPI.as_view(), name='review-list'),
 ]
