@@ -55,6 +55,18 @@ class Review(models.Model):
         auto_now=True,
         verbose_name='수정일시'
     )
+
+    category = models.CharField(
+        max_length=20, 
+        default="자유", # 기본값 설정
+        verbose_name="카테고리"
+    )
+
+    likes = models.ManyToManyField(
+        settings.AUTH_USER_MODEL, 
+        related_name='liked_reviews', 
+        blank=True
+    )
     
     class Meta:
         db_table = 'reviews'

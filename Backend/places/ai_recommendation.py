@@ -163,7 +163,7 @@ class AIRecommendationSystem:
 
         # API 호출
         message = self.client.messages.create(
-            model="claude-3-5-sonnet-20240620", # 또는 "claude-3-sonnet-20240229"
+            model="claude-sonnet-4-5-20250929", # 또는 "claude-3-sonnet-20240229"
             max_tokens=1000,
             temperature=0,
             messages=[

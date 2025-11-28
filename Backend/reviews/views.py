@@ -3,18 +3,21 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated, AllowAny, IsAuthenticatedOrReadOnly
+from django.shortcuts import get_object_or_404
 from django.db.models import Avg, Count
+
 
 from .models import Review 
 
 from .serializers import ReviewSerializer, ReviewListSerializer, ReviewCreateSerializer
 from rest_framework.generics import ListCreateAPIView
+from rest_framework.views import APIView
 
 class ReviewListAPI(ListCreateAPIView):
     """리뷰 목록 조회"""
-    queryset = Review.objects.all()
-    serializer_class = ReviewSerializer
+    queryset = Review.objects.all().order_by('-created_at')
+    serializer_class = ReviewListSerializer
     permission_classes = [AllowAny]
     
     def get_queryset(self):
@@ -27,8 +30,9 @@ class ReviewListAPI(ListCreateAPIView):
 class ReviewViewSet(viewsets.ModelViewSet):
     """리뷰에 대한 모든 CRUD 작업을 처리하는 ViewSet"""
     
-    queryset = Review.objects.all()
-    serializer_class = ReviewSerializer
+    queryset = Review.objects.all().order_by('-created_at')
+    serializer_class = ReviewListSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
     
     def get_permissions(self):
         """액션별로 권한 다르게 설정"""
@@ -126,7 +130,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
     def my_reviews(self, request):
         """현재 로그인한 사용자가 작성한 리뷰만 조회"""
         reviews = self.get_queryset().filter(user=request.user)
-        serializer = ReviewListSerializer(reviews, many=True)
+        serializer = ReviewListSerializer(reviews, many=True, context={'request': request})
         return Response(serializer.data)
 
     @action(detail=False, methods=['get'], permission_classes=[AllowAny])
@@ -141,8 +145,8 @@ class ReviewViewSet(viewsets.ModelViewSet):
             )
         
         reviews = self.get_queryset().filter(place_id=place_id)
-        serializer = ReviewListSerializer(reviews, many=True)
-        
+        serializer = ReviewListSerializer(reviews, many=True, context={'request': request})
+
         # 통계 정보
         stats = reviews.aggregate(
             total_reviews=Count('id'),
@@ -162,4 +166,21 @@ class ReviewViewSet(viewsets.ModelViewSet):
                 'average_rating': round(stats['average_rating'] or 0, 1),
                 'by_disability_type': list(disability_stats)
             }
+        })
+
+class ReviewLikeView(APIView):
+    def post(self, request, pk):
+        review = get_object_or_404(Review, pk=pk)
+        user = request.user
+
+        if user in review.likes.all():
+            review.likes.remove(user)
+            is_liked = False
+        else:
+            review.likes.add(user)
+            is_liked = True
+            
+        return Response({
+            "likes_count": review.likes.count(),
+            "is_liked": is_liked
         })

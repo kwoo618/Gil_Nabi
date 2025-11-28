@@ -34,6 +34,10 @@ class ReviewListSerializer(serializers.ModelSerializer):
     # 목록 조회 
     nickname = serializers.SerializerMethodField()
     place_name = serializers.SerializerMethodField()  # 동적으로 가져옴
+    is_liked = serializers.SerializerMethodField() # 좋아요 false 인지 true인지 
+    likes_count = serializers.IntegerField(source='likes.count', read_only=True) # 토탈 리뷰 좋아요 개수 
+
+    is_liked = serializers.SerializerMethodField() # 내가 눌렀는지 여부
     
     class Meta:
         model = Review
@@ -46,7 +50,10 @@ class ReviewListSerializer(serializers.ModelSerializer):
             'rating',
             'content',
             'disability_type',
-            'created_at'
+            'category',
+            'created_at',
+            'is_liked',
+            'likes_count'
         ]
     def get_nickname(self, obj):
         """닉네임 또는 username 반환"""
@@ -58,13 +65,21 @@ class ReviewListSerializer(serializers.ModelSerializer):
             return obj.place.building_name
         return None
 
+    # 현재 로그인한 유저가 좋아요 눌렀는지 확인하는 용도 
+    def get_is_liked(self, obj):
+        request = self.context.get('request') # 요청 정보를 가져옴
+        if request and request.user.is_authenticated:
+            # 좋아요 명단(likes)에 현재 유저가 있으면 True
+            return obj.likes.filter(id=request.user.id).exists()
+        return False
+
 class ReviewCreateSerializer(serializers.ModelSerializer):
     # 리뷰 작성용 
     place_id = serializers.CharField(write_only=True) # 작성시에만 사용함
     
     class Meta:
         model = Review
-        fields = ['place_id', 'content', 'rating', 'disability_type']
+        fields = ['place_id', 'content', 'rating', 'disability_type', 'category']
     
     def validate_place_id(self, value):
         """장소 ID 존재 여부 확인"""

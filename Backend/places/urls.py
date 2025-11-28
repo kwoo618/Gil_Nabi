@@ -17,6 +17,7 @@
 
 from django.urls import path
 from django.views.generic import TemplateView
+from .views import KakaoSearchProxy
 
 from . import views
 
@@ -26,7 +27,7 @@ urlpatterns = [
     # API
     path('filter/', views.FilterPlacesView.as_view(), name='filter'),
     path('ai-recommend/', views.AIRecommendView.as_view(), name='ai-recommend'),
-    
+    path('kakao/search/', KakaoSearchProxy.as_view(), name='kakao-search'),
     # CRUD
     path('', views.PlaceListCreate.as_view(), name='place-list'),
     path('<str:id>/', views.PlaceRetrieveUpdateDestroy.as_view(), name='place-detail'),

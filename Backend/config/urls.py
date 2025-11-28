@@ -13,6 +13,7 @@ urlpatterns = [
     path('api/reviews/', include('reviews.urls')),
     path('api/places/', include('places.urls')),
     path('api/community/', include('community.urls')),
+    
     # path('test/', test_page),  # 직접 연결
 
 
