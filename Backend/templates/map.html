@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8">
+    <title>길나비 - 접근성 지도 서비스</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+        }
+        
+        body { 
+            display: flex; 
+            height: 100vh; 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            overflow: hidden;
+        }
+        
+        .sidebar {
+            width: 380px;
+            background: #f8f9fa;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+        }
+        
+        .sidebar-header {
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+        
+        .sidebar-header h2 {
+            margin: 0;
+            font-size: 24px;
+        }
+        
+        .sidebar-header p {
+            margin: 5px 0 0 0;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .filter-section {
+            background: white;
+            padding: 15px;
+            margin: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .filter-section h3 {
+            margin: 0 0 10px 0;
+            font-size: 16px;
+            color: #333;
+        }
+        
+        .filter-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        
+        .filter-item {
+            padding: 8px;
+            background: #f1f3f5;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .filter-item:hover {
+            background: #e9ecef;
+        }
+        
+        .filter-item input {
+            margin-right: 5px;
+            cursor: pointer;
+        }
+        
+        .filter-status {
+            margin-top: 10px;
+            padding: 8px;
+            background: #e7f5ff;
+            color: #0c8599;
+            border-radius: 6px;
+            font-size: 12px;
+        }
+        
+        .control-section {
+            padding: 15px;
+            flex: 1;
+            overflow-y: auto;
+        }
+        
+        .search-box {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 15px;
+        }
+        
+        .search-box input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        .btn {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        
+        .btn-primary { 
+            background: #667eea; 
+            color: white; 
+        }
+        
+        .btn-ai { 
+            background: linear-gradient(135deg, #f093fb, #f5576c); 
+            color: white; 
+            width: 100%; 
+            margin-bottom: 10px; 
+        }
+        
+        .btn-filter { 
+            background: #4ecdc4; 
+            color: white; 
+            width: 100%; 
+            margin-bottom: 10px; 
+        }
+        
+        .btn-db { 
+            background: #45b7d1; 
+            color: white; 
+            width: 100%; 
+            margin-bottom: 10px; 
+        }
+        
+        .btn-reset { 
+            background: #868e96; 
+            color: white; 
+            width: 100%; 
+        }
+        
+        #results {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .result-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .result-item:hover {
+            background: #f8f9fa;
+        }
+        
+        #map { 
+            flex: 1;
+            position: relative;
+        }
+        
+        .map-info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            z-index: 100;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h2>🗺️ 길나비</h2>
+            <p>장애인 접근성 지도 서비스</p>
+        </div>
+        
+        <div class="filter-section">
+            <h3>접근성 필터</h3>
+            <div class="filter-grid">
+                <div class="filter-item">
+                    <label>
+                        <input type="checkbox" id="wheelchair">
+                        ♿ 휠체어
+                    </label>
+                </div>
+                <div class="filter-item">
+                    <label>
+                        <input type="checkbox" id="elevator">
+                        🛗 엘리베이터
+                    </label>
+                </div>
+                <div class="filter-item">
+                    <label>
+                        <input type="checkbox" id="ramp">
+                        📐 경사로
+                    </label>
+                </div>
+                <div class="filter-item">
+                    <label>
+                        <input type="checkbox" id="toilet">
+                        🚻 장애인화장실
+                    </label>
+                </div>
+            </div>
+            <div class="filter-status" id="filter-status">
+                필터: 전체 표시
+            </div>
+        </div>
+        
+        <div class="control-section">
+            <div class="search-box">
+                <input type="text" id="search-input" placeholder="건물명 검색...">
+                <button class="btn btn-primary" onclick="mapSearch.search()">검색</button>
+            </div>
+            
+            <button class="btn btn-filter" onclick="mapFilter.applyFilters()">
+                🔍 필터 적용
+            </button>
+            
+            <button class="btn btn-ai" onclick="mapAI.getRecommendation()">
+                AI 추천
+            </button>
+            
+            <button class="btn btn-db" onclick="mapUI.showDBInfo()">
+                📊 DB 정보
+            </button>
+            
+            <button class="btn btn-reset" onclick="mapMain.resetAll()">
+                🔄 초기화
+            </button>
+            
+            <div id="results">
+                <p style="text-align: center; color: #adb5bd;">
+                    지도를 클릭하거나 검색해보세요
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <div id="map"></div>
+    
+    <!-- Kakao Maps API -->
+    <script src="//dapi.kakao.com/v2/maps/sdk.js?appkey={{ kakao_map_key }}&libraries=services"></script>
+    
+    <!-- 모듈 JS 파일들 (순서 중요!) -->
+    <script src="/static/js/map_main.js"></script>
+    <script src="/static/js/map_filter.js"></script>
+    <script src="/static/js/map_search.js"></script>
+    <script src="/static/js/map_click.js"></script>
+    <script src="/static/js/map_markers.js"></script>
+    <script src="/static/js/map_ui.js"></script>
+    <script src="/static/js/map_info.js"></script>
+    <script src="/static/js/map_ai.js"></script>
+
+    
+    <script src="/static/js/debug_helper.js"></script>
+    
+    <script>
+        // 초기화 확인
+        window.addEventListener('load', function() {
+            console.log('=== 페이지 로드 완료 ===');
+            console.log('mapAI 상태:', typeof mapAI);
+            console.log('mapMain 상태:', typeof mapMain);
+            
+            // 2초 후 시스템 체크
+            setTimeout(function() {
+                if (typeof debugHelper !== 'undefined') {
+                    console.log('=== 자동 시스템 체크 ===');
+                    // debugHelper.checkAllSystems(); // mapAI 에러 때문에 주석 처리
+                    console.log('전역 객체들:', {
+                        mapMain: typeof mapMain,
+                        mapFilter: typeof mapFilter,
+                        mapSearch: typeof mapSearch,
+                        mapClick: typeof mapClick,
+                        mapAI: typeof mapAI,
+                        mapMarkers: typeof mapMarkers,
+                        mapInfo: typeof mapInfo,
+                        mapUI: typeof mapUI
+                    });
+                }
+            }, 2000);
+        });
+    </script>
+</body>
+</html>
