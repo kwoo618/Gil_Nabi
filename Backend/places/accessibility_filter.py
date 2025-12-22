@@ -6,7 +6,7 @@ class AccessibilityFilter:
     
     def get_filtered_places_with_details(self, filters, map_bounds=None, search_query=None):
         """필터링 + 검색"""
-        
+
         queryset = Accessibility.objects.all()
         
         # 1. 지도 범위
