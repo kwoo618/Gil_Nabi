@@ -66,6 +66,8 @@
         <!-- 디버그용 버튼 (개발 중에만 사용) -->
         <div style="padding:10px; border-top:1px solid #eee; text-align:center;">
             <button onclick="mapUI.showDBInfo()" style="background:#eee; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">📊 DB 현황 보기</button>
+            <button onclick="debugHelper.checkAllSystems()" style="background:#e2e6ea; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">🛠️ 시스템 점검</button>
+            <button onclick="debugHelper.generateTestData()" style="background:#d4edda; color:#155724; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; margin-top:5px;">🎲 테스트 데이터 생성</button>
             <button onclick="mapMain.resetAll()" style="background:#eee; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">🔄 초기화</button>
         </div>
     </div>

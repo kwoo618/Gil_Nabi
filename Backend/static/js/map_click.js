@@ -161,5 +161,17 @@ const mapClick = {
             return null;
         }
     },
-    // showEditForm, saveEdit 등 중복 로직은 map_info.js로 통합됨
+
+    getCSRFToken: function() {
+        let csrftoken = null;
+        if (document.cookie) {
+            document.cookie.split(';').forEach(cookie => {
+                const parts = cookie.trim().split('=');
+                if (parts[0] === 'csrftoken') {
+                    csrftoken = parts[1];
+                }
+            });
+        }
+        return csrftoken;
+    }
 };

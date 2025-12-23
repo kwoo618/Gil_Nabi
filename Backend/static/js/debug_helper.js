@@ -94,6 +94,59 @@ const debugHelper = {
         } else {
             console.log("❌ 리뷰 생성 실패:", await response.text());
         }
+    },
+
+    // 🎲 테스트 데이터 자동 생성 (장소 + 리뷰)
+    generateTestData: async function() {
+        console.log("🎲 테스트 데이터 생성 시작...");
+        
+        // 1. 임의의 장소 데이터 생성
+        const randomId = Math.floor(Math.random() * 10000);
+        const placeData = {
+            id: "test_place_" + randomId,
+            building_name: "테스트 장소 " + randomId,
+            latitude: 35.896 + (Math.random() * 0.01 - 0.005), // 현재 지도 중심 근처 난수
+            longitude: 128.850 + (Math.random() * 0.01 - 0.005),
+            wheelchair: true,
+            has_elevator: Math.random() > 0.5,
+            has_ramp: true,
+            accessible_toilet: Math.random() > 0.5
+        };
+
+        try {
+            const placeRes = await fetch('/api/places/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': this.getCSRFToken()
+                },
+                body: JSON.stringify(placeData)
+            });
+            
+            if (placeRes.ok) {
+                const place = await placeRes.json();
+                console.log("✅ 장소 생성 성공:", place.building_name);
+                
+                // 2. 해당 장소에 리뷰 생성 시도
+                await this.createTestReview(place.id);
+                
+                alert(`테스트 데이터 생성 완료!\n장소: ${place.building_name}\n(리뷰 생성은 로그인이 필요합니다)`);
+                
+                // 지도 새로고침
+                if (typeof mapMain !== 'undefined') mapMain.loadInitialData();
+            } else {
+                console.error("장소 생성 실패:", await placeRes.text());
+                alert("장소 생성 실패");
+            }
+        } catch (e) {
+            console.error("데이터 생성 오류:", e);
+            alert("데이터 생성 중 오류 발생");
+        }
+    },
+
+    getCSRFToken: function() {
+        let matches = document.cookie.match(/csrftoken=([^;]+)/);
+        return matches ? matches[1] : null;
     }
 };
 

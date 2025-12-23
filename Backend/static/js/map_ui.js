@@ -90,12 +90,20 @@ const mapUI = {
         
         try {
             // 장소 정보
-            const placesRes = await fetch('/api/places/');
-            const places = await placesRes.json();
+            let places = [];
+            try {
+                const placesRes = await fetch('/api/places/');
+                const placesData = await placesRes.json();
+                places = Array.isArray(placesData) ? placesData : (placesData.results || []);
+            } catch (e) { console.warn("장소 로드 실패", e); }
             
             // 리뷰 정보
-            const reviewsRes = await fetch('/api/reviews/');
-            const reviews = await reviewsRes.json();
+            let reviews = [];
+            try {
+                const reviewsRes = await fetch('/api/reviews/');
+                const reviewsData = await reviewsRes.json();
+                reviews = Array.isArray(reviewsData) ? reviewsData : (reviewsData.results || []);
+            } catch (e) { console.warn("리뷰 로드 실패 (데이터가 없거나 API 오류)", e); }
             
             let html = '<h4>📊 데이터베이스 현황</h4>';
             html += `<p>총 ${places.length}개 장소 | ${reviews.length}개 리뷰</p>`;
