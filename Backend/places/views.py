@@ -5,15 +5,15 @@ import requests
 import traceback
 from dotenv import load_dotenv
 
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render
 from django.utils.decorators import method_decorator
-from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
+from django.views.decorators.csrf import csrf_exempt
 from django.contrib.postgres.search import TrigramSimilarity
 
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
+from rest_framework.permissions import AllowAny
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from django_filters.rest_framework import DjangoFilterBackend
 
@@ -24,6 +24,7 @@ from .serializers import AccessibilitySerializer, AIRecommendationSerializer
 # 추천 및 필터 시스템
 from .ai_recommendation import AIRecommendationSystem
 from .accessibility_filter import AccessibilityFilter
+from .utils import get_kakao_building_name
 
 load_dotenv()
 
@@ -31,21 +32,8 @@ load_dotenv()
 
 def test_page(request):
     """테스트 페이지"""
-    return render(request, 'map.html')
-
-@ensure_csrf_cookie
-def show_map(request):
-    """지도 페이지 렌더링"""
-    places_queryset = Accessibility.objects.all()
-    serializer = AccessibilitySerializer(places_queryset, many=True)
-    
     kakao_key = os.getenv('KAKAO_MAP_KEY')
-    
-    context = {
-        'places': serializer.data,
-        'kakao_map_key': kakao_key
-    }
-    return render(request, 'map.html', context)
+    return render(request, 'map.html', {'kakao_map_key': kakao_key})
 
 
 # ============ 장소 CRUD API ============
@@ -91,38 +79,9 @@ class PlaceListCreate(ListCreateAPIView):
             lng = data.get('longitude')
             
             if lat and lng:
-                kakao_api_key = os.getenv('KAKAO_RESTAPI_KEY')
-                if kakao_api_key:
-                    try:
-                        headers = {"Authorization": f"KakaoAK {kakao_api_key}"}
-                        
-                        # 1단계: 좌표 -> 주소 변환
-                        geo_url = "https://dapi.kakao.com/v2/local/geo/coord2address.json"
-                        geo_params = {"x": lng, "y": lat}
-                        res = requests.get(geo_url, headers=headers, params=geo_params).json()
-                        
-                        found_name = None
-                        
-                        if res.get('documents'):
-                            road_addr = res['documents'][0].get('road_address')
-                            if road_addr and road_addr.get('building_name'):
-                                found_name = road_addr.get('building_name')
-                            
-                            if not found_name:
-                                # 2단계: 주소 키워드 검색
-                                search_keyword = road_addr.get('address_name') if road_addr else res['documents'][0]['address']['address_name']
-                                if search_keyword:
-                                    search_url = "https://dapi.kakao.com/v2/local/search/keyword.json"
-                                    search_params = {"query": search_keyword, "x": lng, "y": lat, "radius": 50}
-                                    search_res = requests.get(search_url, headers=headers, params=search_params).json()
-                                    if search_res.get('documents'):
-                                        found_name = search_res['documents'][0]['place_name']
-
-                        if found_name:
-                            data['building_name'] = found_name
-                            
-                    except Exception as e:
-                        print(f"❌ 카카오 API 에러: {e}")
+                found_name = get_kakao_building_name(lat, lng)
+                if found_name:
+                    data['building_name'] = found_name
 
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
@@ -238,26 +197,10 @@ class AIRecommendView(APIView):
             ai_system = AIRecommendationSystem()
             recommendations = ai_system.get_ai_recommendations(user, map_bounds, limit)
 
-            # 4. 데이터 가공 (Android 맞춤형)
-            data_to_send = []
-            for item in recommendations:
-                place = item['place']
-
-                features = []
-                if place.wheelchair: features.append("휠체어 접근 가능")
-                if place.has_elevator: features.append("엘리베이터 있음")
-                if place.has_ramp: features.append("경사로 있음")
-                if place.accessible_toilet: features.append("장애인 화장실")
-
-                data_to_send.append({
-                    "id": place.id,
-                    "name": place.building_name if place.building_name else "이름 없는 장소",
-                    "category": getattr(place, 'category', '장소'),
-                    "avg_rating": item.get('avg_rating', 0.0),
-                    "ai_score": int(item.get('ai_score', 0)),
-                    "ai_reason": item.get('ai_reason', "추천 사유가 없습니다."),
-                    "features": features
-                })
+            # 4. 데이터 가공 (Serializer 사용)
+            # recommendations는 딕셔너리 리스트 형태이므로 many=True로 처리
+            serializer = AIRecommendationSerializer(recommendations, many=True)
+            data_to_send = serializer.data
 
             # 5. 성공 응답
             return Response({ 

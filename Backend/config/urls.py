@@ -3,7 +3,7 @@ from django.urls import path, include # import : Django에서 URL을 관리할 �
 from django.conf import settings  # html 테스트
 from django.conf.urls.static import static  # html 테스트
 from django.views.generic import TemplateView
-from places.views import show_map, test_page
+from places.views import test_page
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -23,11 +23,9 @@ urlpatterns = [
     path('', TemplateView.as_view(template_name='login.html'), name='home'),  
     path('login/', TemplateView.as_view(template_name='login.html'), name='login_page'),
     path('signup/', TemplateView.as_view(template_name='signup.html'), name='signup_page'), 
-    path('map/', show_map, name='show-map'),
     path('reviews/', TemplateView.as_view(template_name='reviews.html'), name='review_page'),
     path('community/', TemplateView.as_view(template_name='community.html'), name='community_page'),
-
-    path('map/', show_map, name='map'),
+    path('map/', test_page, name='map_page'),
 ]
 
 if settings.DEBUG:

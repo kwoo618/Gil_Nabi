@@ -21,7 +21,26 @@ class AccessibilitySerializer(serializers.ModelSerializer):
         return super().create(validated_data)
 
 class AIRecommendationSerializer(serializers.Serializer):
-    place = AccessibilitySerializer()
-    ai_score = serializers.FloatField()
-    review_count = serializers.IntegerField()
+    """AI 추천 결과 응답용 시리얼라이저"""
+    id = serializers.CharField(source='place.id')
+    name = serializers.SerializerMethodField()
+    category = serializers.SerializerMethodField()
     avg_rating = serializers.FloatField()
+    ai_score = serializers.IntegerField()
+    ai_reason = serializers.CharField()
+    features = serializers.SerializerMethodField()
+
+    def get_name(self, obj):
+        return obj['place'].building_name or "이름 없는 장소"
+
+    def get_category(self, obj):
+        return getattr(obj['place'], 'category', '장소')
+
+    def get_features(self, obj):
+        place = obj['place']
+        features = []
+        if place.wheelchair: features.append("휠체어 접근 가능")
+        if place.has_elevator: features.append("엘리베이터 있음")
+        if place.has_ramp: features.append("경사로 있음")
+        if place.accessible_toilet: features.append("장애인 화장실")
+        return features

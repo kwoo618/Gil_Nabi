@@ -22,7 +22,7 @@ const mapSearch = {
             });
             
             if (data && data.success && data.markers.length > 0) {
-                this.displayFilteredResults(data.markers, query);
+                this.displayFilteredResults(data.markers, query, '필터+DB');
             } else {
                 mapUI.showMessage(`현재 화면에서 "${query}" 검색 결과가 없습니다`);
             }
@@ -42,7 +42,7 @@ const mapSearch = {
                 const data = await response.json();
                 
                 if (data.success && data.markers.length > 0) {
-                    this.displayFilteredResults(data.markers, query);
+                    this.displayFilteredResults(data.markers, query, 'DB');
                 } else {
                     // 카카오맵 검색 (화면 범위 내)
                     this.searchKakaoInBounds(query, bounds);
@@ -84,7 +84,7 @@ const mapSearch = {
         });
     },
     
-    displayFilteredResults: function(results, query) {
+    displayFilteredResults: function(results, query, source) {
         results.forEach((place, index) => {
             const position = new kakao.maps.LatLng(
                 place.position.lat,
@@ -113,10 +113,10 @@ const mapSearch = {
         });
         
         // 결과 목록 표시
-        this.showResultsList(results, query, 'Filter+DB');
+        mapUI.showSearchResults(results, query, source);
     },
     
-    displayDBResults: function(results, query) {
+    displayDBResults: function(results, query, source) {
         results.forEach((place, index) => {
             const position = new kakao.maps.LatLng(place.latitude, place.longitude);
             
@@ -142,7 +142,7 @@ const mapSearch = {
         });
         
         // 결과 목록 표시
-        this.showResultsList(results, query, 'DB');
+        mapUI.showSearchResults(results, query, source);
     },
     
     searchKakao: function(query) {
@@ -187,42 +187,6 @@ const mapSearch = {
         });
         
         // 결과 목록 표시
-        this.showResultsList(results, query, 'Kakao');
-    },
-    
-    showResultsList: function(results, query, source) {
-        let html = `
-            <h4>🔍 "${query}" 검색 결과</h4>
-            <p style="color:#666; font-size:12px;">
-                ${results.length}개 (${source === 'DB' ? '데이터베이스' : '카카오맵'})
-            </p>`;
-        
-        results.slice(0, 10).forEach((place, i) => {
-            const name = place.building_name || place.place_name;
-            const address = place.address || place.address_name || '';
-            const lat = place.latitude || place.y;
-            const lng = place.longitude || place.x;
-            
-            html += `
-                <div class="result-item" style="padding:10px; border-bottom:1px solid #eee; cursor:pointer;"
-                     onclick="mapSearch.focusMarker(${lat}, ${lng}, ${i})">
-                    <strong>${i + 1}. ${name}</strong><br>
-                    <small style="color:#666;">${address}</small>
-                </div>
-            `;
-        });
-        
-        document.getElementById('results').innerHTML = html;
-    },
-    
-    focusMarker: function(lat, lng, index) {
-        const position = new kakao.maps.LatLng(lat, lng);
-        mapMain.map.panTo(position);
-        mapMain.map.setLevel(3);
-        
-        // 해당 마커 클릭 트리거
-        if (mapMain.markers[index]) {
-            kakao.maps.event.trigger(mapMain.markers[index], 'click');
-        }
+        mapUI.showSearchResults(results, query, '카카오맵');
     }
 };

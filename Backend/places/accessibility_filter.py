@@ -4,9 +4,8 @@ from .models import Accessibility
 class AccessibilityFilter:
     """접근성 필터링 + 검색"""
     
-    def get_filtered_places_with_details(self, filters, map_bounds=None, search_query=None):
-        """필터링 + 검색"""
-        
+    def get_queryset(self, filters, map_bounds=None, search_query=None):
+        """필터링된 QuerySet 반환 (재사용 목적)"""
         queryset = Accessibility.objects.all()
         
         # 1. 지도 범위
@@ -31,6 +30,12 @@ class AccessibilityFilter:
         # 3. 검색어 필터
         if search_query and search_query.strip():
             queryset = queryset.filter(building_name__icontains=search_query.strip())
+        
+        return queryset
+
+    def get_filtered_places_with_details(self, filters, map_bounds=None, search_query=None):
+        """필터링 + 검색 후 상세 정보 리스트 반환"""
+        queryset = self.get_queryset(filters, map_bounds, search_query)
         
         # 결과 생성
         filtered = []

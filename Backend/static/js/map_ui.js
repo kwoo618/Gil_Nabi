@@ -17,6 +17,28 @@ const mapUI = {
         `;
     },
     
+    // 통합 검색 결과 표시 (필터, 검색, 카카오 등)
+    showSearchResults: function(places, query, source = '검색') {
+        let html = `<h4>🔍 "${query}" ${source} 결과</h4>`;
+        html += `<p style="color:#666; font-size:12px;">${places.length}개 발견</p>`;
+        
+        places.forEach((place, i) => {
+            const name = place.building_name || place.place_name;
+            const address = place.address || place.address_name || '';
+            const info = place.matching_filters ? place.matching_filters.join(' • ') : address;
+
+            html += `
+                <div class="result-item" style="padding:10px; border-bottom:1px solid #eee; cursor:pointer;"
+                     onclick="mapUI.triggerMarkerClick(${i})">
+                    <strong>${i + 1}. ${name}</strong><br>
+                    <small style="color:#666;">${info}</small>
+                </div>
+            `;
+        });
+        
+        document.getElementById('results').innerHTML = html;
+    },
+
     showFilterResults: function(places) {
         let html = '<h4>📍 필터 결과</h4>';
         html += `<p style="color:#666; font-size:12px;">${places.length}개 장소</p>`;
@@ -24,24 +46,7 @@ const mapUI = {
         places.forEach((place, i) => {
             html += `
                 <div class="result-item" style="padding:10px; border-bottom:1px solid #eee; cursor:pointer;"
-                     onclick="mapMain.map.panTo(new kakao.maps.LatLng(${place.position.lat}, ${place.position.lng}))">
-                    <strong>${i + 1}. ${place.building_name}</strong><br>
-                    <small style="color:#666;">${place.matching_filters.join(' • ')}</small>
-                </div>
-            `;
-        });
-        
-        document.getElementById('results').innerHTML = html;
-    },
-    
-    showSearchResults: function(places, query) {
-        let html = `<h4>🔍 "${query}" 검색 결과</h4>`;
-        html += `<p style="color:#666; font-size:12px;">${places.length}개 발견</p>`;
-        
-        places.forEach((place, i) => {
-            html += `
-                <div class="result-item" style="padding:10px; border-bottom:1px solid #eee; cursor:pointer;"
-                     onclick="mapMain.map.panTo(new kakao.maps.LatLng(${place.position.lat}, ${place.position.lng}))">
+                     onclick="mapUI.triggerMarkerClick(${i})">
                     <strong>${i + 1}. ${place.building_name}</strong><br>
                     <small style="color:#666;">${place.matching_filters.join(' • ')}</small>
                 </div>
@@ -63,7 +68,7 @@ const mapUI = {
             
             html += `
                 <div class="result-item" style="padding:12px; border-bottom:1px solid #eee; cursor:pointer;"
-                     onclick="mapMain.map.panTo(new kakao.maps.LatLng(${place.position.lat}, ${place.position.lng}))">
+                     onclick="mapUI.triggerMarkerClick(${i})">
                     <div style="display:flex; align-items:center;">
                         <span style="font-size:24px; margin-right:10px;">${medal}</span>
                         <div>
@@ -136,6 +141,15 @@ const mapUI = {
         } catch (error) {
             console.error('DB 정보 로드 오류:', error);
             this.showMessage('DB 정보를 불러올 수 없습니다');
+        }
+    },
+
+    // 마커 클릭 트리거 (리스트 클릭 시 지도 마커 클릭 효과)
+    triggerMarkerClick: function(index) {
+        const marker = mapMain.markers[index];
+        if (marker) {
+            kakao.maps.event.trigger(marker, 'click');
+            mapMain.map.panTo(marker.getPosition());
         }
     }
 };

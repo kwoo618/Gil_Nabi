@@ -7,6 +7,7 @@ from django.conf import settings
 from django.db.models import Avg
 from reviews.models import Review
 from .models import Accessibility
+from .accessibility_filter import AccessibilityFilter
 
 class AIRecommendationSystem:
     """Claude AI 기반 추천 시스템"""
@@ -32,23 +33,10 @@ class AIRecommendationSystem:
         # views.py에서 map_bounds 안에 filters를 합쳐서 보내줍니다.
         filters = map_bounds.get('filters', {})
         
-        # 지도 범위 내 장소 검색
-        places = Accessibility.objects.filter(
-            latitude__gte=map_bounds.get('south', 35.88),
-            latitude__lte=map_bounds.get('north', 35.91),
-            longitude__gte=map_bounds.get('west', 128.84),
-            longitude__lte=map_bounds.get('east', 128.87)
-        )
-
-        # 필터 조건 적용 (체크된 항목만 필터링)
-        if filters.get('wheelchair'):
-            places = places.filter(wheelchair=True)
-        if filters.get('has_elevator'):
-            places = places.filter(has_elevator=True)
-        if filters.get('has_ramp'):
-            places = places.filter(has_ramp=True)
-        if filters.get('accessible_toilet'):
-            places = places.filter(accessible_toilet=True)
+        # 공통 필터링 로직 사용 (중복 제거)
+        filter_system = AccessibilityFilter()
+        # map_bounds 내부에 filters가 있어도, get_queryset 호출 시 분리해서 처리됨
+        places = filter_system.get_queryset(filters=filters, map_bounds=map_bounds)
 
         # 사용자 프로필 기반 필수 조건 (예: 휠체어 사용자)
         if getattr(user, 'has_wheelchair', False):
@@ -137,20 +125,22 @@ class AIRecommendationSystem:
 
         prompt = f"""
         당신은 장애인 접근성 전문가 '길나비 AI'입니다.
+        사용자의 장애 유형과 요구사항을 분석하여 가장 적합한 장소를 추천해야 합니다.
         
-        [사용자 정보]
-        {user_info_str}
+        [사용자 프로필]
+        - {user_info_str}
 
-        [장소 및 리뷰 데이터]
+        [분석 대상 장소 목록]
         {json.dumps(places_data_for_ai, ensure_ascii=False)}
 
-        [목표]
-        위 사용자에게 가장 적합한 장소를 추천하고 순위를 매겨주세요.
-        리뷰의 내용을 분석하여 사용자의 장애 유형에 대해 긍정적인지 부정적인지 판단하여 0~100점 사이의 점수를 매기세요.
+        [요청사항]
+        1. 각 장소의 리뷰와 접근성 정보를 종합적으로 분석하세요.
+        2. 사용자의 장애 유형에 비추어 실제 방문 시 겪을 수 있는 편의성이나 불편함을 예측하세요.
+        3. 0~100점 사이의 'score'를 산정하세요. (접근성이 좋고 리뷰가 긍정적일수록 높은 점수)
+        4. 추천 이유('reason')를 한 줄로 명확하고 친절하게 작성하세요.
 
         [출력 형식]
-        반드시 오직 JSON 배열 형식으로만 응답하세요. 다른 말은 하지 마세요.
-        형식:
+        반드시 아래 JSON 배열 포맷만 출력하세요. 마크다운이나 추가 설명은 포함하지 마세요.
         [
             {{
                 "id": "장소ID",
