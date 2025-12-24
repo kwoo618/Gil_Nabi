@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Accessibility
+from .models import Accessibility, ModificationRequest
 
 class AccessibilitySerializer(serializers.ModelSerializer):
     # 접근성 필드들을 직접 정의하여 null 허용 명시
@@ -19,6 +19,14 @@ class AccessibilitySerializer(serializers.ModelSerializer):
             if field not in validated_data:
                 validated_data[field] = None
         return super().create(validated_data)
+
+class ModificationRequestSerializer(serializers.ModelSerializer):
+    place_name = serializers.ReadOnlyField(source='place.building_name')
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+
+    class Meta:
+        model = ModificationRequest
+        fields = ['id', 'place', 'place_name', 'wheelchair', 'has_elevator', 'has_ramp', 'accessible_toilet', 'status', 'status_display', 'created_at']
 
 class AIRecommendationSerializer(serializers.Serializer):
     """AI 추천 결과 응답용 시리얼라이저"""

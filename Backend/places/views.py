@@ -13,13 +13,13 @@ from django.contrib.postgres.search import TrigramSimilarity
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny
-from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView, ListAPIView
 from django_filters.rest_framework import DjangoFilterBackend
 
 # 모델 및 시리얼라이저
 from .models import Accessibility, ModificationRequest
-from .serializers import AccessibilitySerializer, AIRecommendationSerializer
+from .serializers import AccessibilitySerializer, AIRecommendationSerializer, ModificationRequestSerializer
 
 # 추천 및 필터 시스템
 from .ai_recommendation import AIRecommendationSystem
@@ -142,6 +142,14 @@ class PlaceRetrieveUpdateDestroy(RetrieveUpdateDestroyAPIView):
             return Response(serializer.data)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+class UserModificationRequestList(ListAPIView):
+    """사용자가 보낸 수정 요청 목록 조회 (마이페이지용)"""
+    serializer_class = ModificationRequestSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return ModificationRequest.objects.filter(user=self.request.user).order_by('-created_at')
 
 
 # ============ 필터 및 검색 유틸리티 ============

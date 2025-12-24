@@ -1,4 +1,7 @@
+import csv
 from django.contrib import admin
+from django.http import HttpResponse
+from django.utils import timezone
 from .models import Accessibility, ModificationRequest
 
 @admin.register(Accessibility)
@@ -14,7 +17,7 @@ class AccessibilityAdmin(admin.ModelAdmin):
 class ModificationRequestAdmin(admin.ModelAdmin):
     list_display = ('place', 'user', 'status', 'created_at', 'wheelchair', 'has_elevator')
     list_filter = ('status', 'place', 'user') # 장소별, 사용자별, 상태별 필터링
-    actions = ['approve_requests', 'reject_requests']
+    actions = ['approve_requests', 'reject_requests', 'download_approved_excel']
 
     @admin.action(description='선택한 요청 승인 및 데이터 반영')
     def approve_requests(self, request, queryset):
@@ -38,3 +41,29 @@ class ModificationRequestAdmin(admin.ModelAdmin):
     @admin.action(description='선택한 요청 거절')
     def reject_requests(self, request, queryset):
         queryset.update(status='rejected')
+
+    @admin.action(description='선택한 내역 중 승인된 항목만 엑셀(CSV) 다운로드')
+    def download_approved_excel(self, request, queryset):
+        """승인된 요청 내역을 CSV 파일로 다운로드 (엑셀 호환)"""
+        response = HttpResponse(content_type='text/csv; charset=utf-8-sig')
+        filename = f"approved_requests_{timezone.localdate()}.csv"
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+        writer = csv.writer(response)
+        writer.writerow(['장소', '사용자', '요청일시', '휠체어', '엘리베이터', '경사로', '화장실'])
+
+        # 선택된 항목 중 승인된 것만 필터링
+        approved_queryset = queryset.filter(status='approved')
+
+        for req in approved_queryset:
+            writer.writerow([
+                req.place.building_name,
+                str(req.user) if req.user else '알 수 없음',
+                req.created_at.strftime('%Y-%m-%d %H:%M'),
+                'O' if req.wheelchair is True else ('X' if req.wheelchair is False else '-'),
+                'O' if req.has_elevator is True else ('X' if req.has_elevator is False else '-'),
+                'O' if req.has_ramp is True else ('X' if req.has_ramp is False else '-'),
+                'O' if req.accessible_toilet is True else ('X' if req.accessible_toilet is False else '-'),
+            ])
+        
+        return response
