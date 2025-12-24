@@ -69,17 +69,11 @@ const debugHelper = {
     
     // 수동 리뷰 생성 (테스트용)
     createTestReview: async function(placeId) {
-        const token = localStorage.getItem('access_token');
-        if (!token) {
-            console.log("토큰이 없습니다. 로그인 필요");
-            return;
-        }
-        
         const response = await fetch('/api/reviews/', {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'X-CSRFToken': this.getCSRFToken()
             },
             body: JSON.stringify({
                 place: placeId,
