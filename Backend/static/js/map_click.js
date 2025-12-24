@@ -1,14 +1,13 @@
 // map_click.js - 지도 클릭 이벤트 및 장소 저장
-
-const mapClick = {
-    init: function() {
+class MapClickController {
+    init() {
         // 지도 클릭 이벤트
         kakao.maps.event.addListener(mapMain.map, 'click', (mouseEvent) => {
             this.handleMapClick(mouseEvent.latLng);
         });
-    },
+    }
     
-    handleMapClick: async function(latlng) {
+    async handleMapClick(latlng) {
         console.log('🖱️ 클릭 좌표:', latlng.toString());
         mapUI.showLoading('장소 검색 중...');
         
@@ -29,9 +28,9 @@ const mapClick = {
             console.error('장소 검색 오류:', error);
             mapUI.showMessage('장소 검색 중 오류가 발생했습니다');
         }
-    },
+    }
     
-    getAddressFromCoords: function(latlng) {
+    getAddressFromCoords(latlng) {
         return new Promise((resolve) => {
             mapMain.geocoder.coord2Address(latlng.getLng(), latlng.getLat(), (result, status) => {
                 if (status === kakao.maps.services.Status.OK) {
@@ -42,9 +41,9 @@ const mapClick = {
                 }
             });
         });
-    },
+    }
     
-    searchPlace: function(latlng, address) {
+    searchPlace(latlng, address) {
         return new Promise((resolve) => {
             // 주소가 있으면 주소로 검색
             if (address) {
@@ -64,9 +63,9 @@ const mapClick = {
                 this.searchNearby(latlng, resolve);
             }
         });
-    },
+    }
     
-    searchNearby: function(latlng, resolve) {
+    searchNearby(latlng, resolve) {
         // 카테고리 검색 대신 키워드 검색 사용 (빈 키워드 + 좌표 기반)
         // 또는 특정 카테고리 지정 (예: 편의시설 등)
         mapMain.places.keywordSearch('건물', (data, status) => { 
@@ -80,10 +79,10 @@ const mapClick = {
             radius: 50,
             sort: kakao.maps.services.SortBy.DISTANCE
         });
-    },
+    }
     
 // processPlace 메소드 수정
-    processPlace: async function(placeInfo) {
+    async processPlace(placeInfo) {
         const kakaoId = String(placeInfo.id);
         
         try {
@@ -124,9 +123,9 @@ const mapClick = {
             mapInfo.showPlaceInfo(tempPlace, marker);
             mapUI.showMessage('DB 연결 오류 - 임시 표시');
         }
-    },
+    }
     
-    saveNewPlace: async function(placeInfo) {
+    async saveNewPlace(placeInfo) {
         const newPlace = {
             id: String(placeInfo.id),
             building_name: placeInfo.place_name,
@@ -160,9 +159,9 @@ const mapClick = {
             console.error('저장 오류:', error);
             return null;
         }
-    },
+    }
 
-    getCSRFToken: function() {
+    getCSRFToken() {
         let csrftoken = null;
         if (document.cookie) {
             document.cookie.split(';').forEach(cookie => {
@@ -174,4 +173,6 @@ const mapClick = {
         }
         return csrftoken;
     }
-};
+}
+
+const mapClick = new MapClickController();

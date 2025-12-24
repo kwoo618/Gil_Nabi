@@ -1,24 +1,24 @@
 // map_ui.js - UI 헬퍼
-const mapUI = {
-    showLoading: function(message = '로딩 중...') {
+class MapUIController {
+    showLoading(message = '로딩 중...') {
         document.getElementById('results').innerHTML = `
             <div style="text-align:center; padding:20px;">
                 <div style="font-size:24px; margin-bottom:10px;">⏳</div>
                 <div>${message}</div>
             </div>
         `;
-    },
+    }
     
-    showMessage: function(message) {
+    showMessage(message) {
         document.getElementById('results').innerHTML = `
             <div style="text-align:center; padding:20px; color:#6c757d;">
                 ${message}
             </div>
         `;
-    },
+    }
     
     // 통합 검색 결과 표시 (필터, 검색, 카카오 등)
-    showSearchResults: function(places, query, source = '검색') {
+    showSearchResults(places, query, source = '검색') {
         let html = `<h4>🔍 "${query}" ${source} 결과</h4>`;
         html += `<p style="color:#666; font-size:12px;">${places.length}개 발견</p>`;
         
@@ -37,9 +37,9 @@ const mapUI = {
         });
         
         document.getElementById('results').innerHTML = html;
-    },
+    }
 
-    showFilterResults: function(places) {
+    showFilterResults(places) {
         let html = '<h4>📍 필터 결과</h4>';
         html += `<p style="color:#666; font-size:12px;">${places.length}개 장소</p>`;
         
@@ -54,9 +54,9 @@ const mapUI = {
         });
         
         document.getElementById('results').innerHTML = html;
-    },
+    }
     
-    showAIResults: function(places, userInfo) {
+    showAIResults(places, userInfo) {
         let html = '<h4>🤖 AI 추천 Top 5</h4>';
         html += `<p style="color:#666; font-size:12px;">
             사용자: ${userInfo.disability_type} | 휠체어: ${userInfo.has_wheelchair ? 'O' : 'X'}
@@ -83,9 +83,9 @@ const mapUI = {
         });
         
         document.getElementById('results').innerHTML = html;
-    },
+    }
     
-    showDBInfo: async function() {
+    async showDBInfo() {
         this.showLoading('DB 정보 로딩 중...');
         
         try {
@@ -150,14 +150,16 @@ const mapUI = {
             console.error('DB 정보 로드 오류:', error);
             this.showMessage('DB 정보를 불러올 수 없습니다');
         }
-    },
+    }
 
     // 마커 클릭 트리거 (리스트 클릭 시 지도 마커 클릭 효과)
-    triggerMarkerClick: function(index) {
+    triggerMarkerClick(index) {
         const marker = mapMain.markers[index];
         if (marker) {
             kakao.maps.event.trigger(marker, 'click');
             mapMain.map.panTo(marker.getPosition());
         }
     }
-};
+}
+
+const mapUI = new MapUIController();

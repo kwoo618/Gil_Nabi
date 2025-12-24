@@ -12,8 +12,10 @@
         /* 사이드바 스타일 */
         #sidebar { width: 350px; background: #fff; border-right: 1px solid #ddd; display: flex; flex-direction: column; z-index: 2; box-shadow: 2px 0 5px rgba(0,0,0,0.1); }
         .search-box { padding: 15px; background: #f8f9fa; border-bottom: 1px solid #eee; }
-        .search-box input { width: 70%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
-        .search-box button { width: 25%; padding: 8px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        .search-box input { flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        .search-box button { padding: 8px; border-radius: 4px; cursor: pointer; }
+        #search-btn { width: 60px; background: #007bff; color: white; border: none; }
+        #voice-btn { width: 40px; background: #fff; border: 1px solid #ddd; color: #333; }
         
         /* 필터 영역 */
         .filter-box { padding: 10px 15px; border-bottom: 1px solid #eee; display: flex; flex-wrap: wrap; gap: 10px; background: #fff; }
@@ -42,8 +44,9 @@
     <!-- 사이드바 -->
     <div id="sidebar">
         <div class="search-box">
-            <div style="display:flex; justify-content:space-between;">
-                <input type="text" id="search-input" placeholder="장소 검색 (예: 카페, 강남역)">
+            <div style="display:flex; gap: 5px;">
+                <input type="text" id="search-input" placeholder="장소 검색 (예: 카페, 공학 7관)">
+                <button id="voice-btn" onclick="voiceHandler.startVoiceRecognition()" title="음성 검색">🎤</button>
                 <button id="search-btn" onclick="mapSearch.search()">검색</button>
             </div>
             <button class="ai-btn" onclick="mapAI.getRecommendation()">🤖 AI 추천 받기</button>
@@ -68,6 +71,7 @@
             <button onclick="mapUI.showDBInfo()" style="background:#eee; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">📊 DB 현황 보기</button>
             <button onclick="debugHelper.checkAllSystems()" style="background:#e2e6ea; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">🛠️ 시스템 점검</button>
             <button onclick="debugHelper.generateTestData()" style="background:#d4edda; color:#155724; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; margin-top:5px;">🎲 테스트 데이터 생성</button>
+            <button onclick="voiceHandler.processVoiceCommand('내 주변 휠체어 접근 가능한 카페')" style="background:#fff3cd; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; margin-top:5px;">🗣️ 음성 명령 테스트</button>
             <button onclick="mapMain.resetAll()" style="background:#eee; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">🔄 초기화</button>
         </div>
     </div>
@@ -90,6 +94,7 @@
 <script src="{% static 'js/map_search.js' %}"></script>
 <script src="{% static 'js/map_click.js' %}"></script>
 <script src="{% static 'js/map_ai.js' %}"></script>
+<script src="{% static 'js/voice_handler.js' %}"></script>
 <script src="{% static 'js/debug_helper.js' %}"></script>
 
 <!-- 메인 컨트롤러 (가장 마지막에 로드) -->

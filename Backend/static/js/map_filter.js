@@ -1,13 +1,13 @@
 // map_filter.js - 필터링 기능
-const mapFilter = {
-    init: function() {
+class MapFilterController {
+    init() {
         // 필터 체크박스 이벤트
         document.querySelectorAll('.filter-item input').forEach(checkbox => {
             checkbox.addEventListener('change', () => this.updateFilters());
         });
-    },
+    }
     
-    updateFilters: function() {
+    updateFilters() {
         mapMain.currentFilters = {
             wheelchair: document.getElementById('wheelchair').checked,
             has_elevator: document.getElementById('elevator').checked,
@@ -20,9 +20,9 @@ const mapFilter = {
         if (activeCount > 0) {
             mapUI.showMessage(`${activeCount}개 필터 활성화됨`);
         }
-    },
+    }
     
-    getFilteredData: async function(additionalParams = {}) {
+    async getFilteredData(additionalParams = {}) {
         const params = {
             filters: mapMain.currentFilters,
             map_bounds: mapMain.getMapBounds(),
@@ -42,9 +42,9 @@ const mapFilter = {
             console.error('필터링 오류:', error);
             return null;
         }
-    },
+    }
     
-    applyFilters: async function() {
+    async applyFilters() {
         mapUI.showLoading('필터링 중...');
         
         const data = await this.getFilteredData();
@@ -64,9 +64,9 @@ const mapFilter = {
             // 👈 [추가] 실패 시 로딩 화면을 없애고 에러 메시지 표시
             mapUI.showMessage('필터링 결과를 가져오지 못했습니다.');
         }
-    },
+    }
     
-    clearFilters: function() {
+    clearFilters() {
         document.querySelectorAll('.filter-item input').forEach(cb => {
             cb.checked = false;
         });
@@ -78,4 +78,6 @@ const mapFilter = {
             accessible_toilet: false
         };
     }
-};
+}
+
+const mapFilter = new MapFilterController();

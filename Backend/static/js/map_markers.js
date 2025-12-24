@@ -1,7 +1,11 @@
 // static/js/map_markers.js - 마커 관리 모듈
-const mapMarkers = {
+class MapMarkerController {
+    constructor() {
+        this.currentMarker = null;
+    }
+
     // 모든 마커 지우기
-    clearAll: function() {
+    clearAll() {
         if (mapMain.markers) {
             mapMain.markers.forEach(marker => marker.setMap(null));
             mapMain.markers = [];
@@ -11,19 +15,19 @@ const mapMarkers = {
             this.currentMarker.setMap(null);
             this.currentMarker = null;
         }
-    },
+    }
 
     // 현재 선택된 마커 설정 (정보창 띄울 때 사용)
-    setCurrentMarker: function(marker) {
+    setCurrentMarker(marker) {
         this.currentMarker = marker;
-    },
+    }
 
-    getCurrentMarker: function() {
+    getCurrentMarker() {
         return this.currentMarker;
-    },
+    }
 
     // 클릭한 위치에 마커 추가
-    addClickMarker: function(place) {
+    addClickMarker(place) {
         const position = new kakao.maps.LatLng(place.latitude, place.longitude);
         const marker = new kakao.maps.Marker({
             position: position,
@@ -32,10 +36,10 @@ const mapMarkers = {
         
         this.setCurrentMarker(marker);
         return marker;
-    },
+    }
 
     // 필터링 결과 마커 추가
-    addFilterMarker: function(place) {
+    addFilterMarker(place) {
         const position = new kakao.maps.LatLng(place.location.latitude, place.location.longitude);
         const marker = new kakao.maps.Marker({
             position: position,
@@ -50,17 +54,17 @@ const mapMarkers = {
 
         mapMain.markers.push(marker);
         return marker;
-    },
+    }
 
     // AI 추천 마커 추가 (순위 표시 등 커스텀 가능)
-    addAIMarker: function(place, rank) {
+    addAIMarker(place, rank) {
         const position = new kakao.maps.LatLng(place.position.lat, place.position.lng);
         
         // 기본 마커 사용 (추후 이미지 마커로 변경 가능)
         const marker = new kakao.maps.Marker({
             position: position,
             map: mapMain.map,
-            title: `${rank위}. ${place.building_name}`
+            title: `${rank}위. ${place.building_name}`
         });
 
         // 클릭 이벤트 연결
@@ -71,4 +75,6 @@ const mapMarkers = {
         mapMain.markers.push(marker);
         return marker;
     }
-};
+}
+
+const mapMarkers = new MapMarkerController();

@@ -151,8 +151,9 @@ const debugHelper = {
 };
 
 // 페이지 로드 시 자동 체크
-window.addEventListener('load', () => {
-    setTimeout(() => {
-        debugHelper.checkAllSystems();
-    }, 2000);
-});
+// 배포 환경에서는 자동 실행되지 않도록 주석 처리
+// window.addEventListener('load', () => {
+//     setTimeout(() => {
+//         debugHelper.checkAllSystems();
+//     }, 2000);
+// });

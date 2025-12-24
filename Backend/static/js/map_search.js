@@ -1,6 +1,6 @@
 // map_search.js - 검색 기능 개선
-const mapSearch = {
-    search: async function() {
+class MapSearchController {
+    async search() {
         const query = document.getElementById('search-input').value.trim();
         
         if (!query) {
@@ -52,9 +52,9 @@ const mapSearch = {
                 this.searchKakaoInBounds(query, bounds);
             }
         }
-    },
+    }
 
-    searchKakaoInBounds: function(query, bounds) {
+    searchKakaoInBounds(query, bounds) {
         const center = new kakao.maps.LatLng(
             (bounds.north + bounds.south) / 2,
             (bounds.east + bounds.west) / 2
@@ -82,9 +82,9 @@ const mapSearch = {
             location: center,
             radius: 5000  // 5km 반경
         });
-    },
+    }
     
-    displayFilteredResults: function(results, query, source) {
+    displayFilteredResults(results, query, source) {
         results.forEach((place, index) => {
             const position = new kakao.maps.LatLng(
                 place.position.lat,
@@ -114,49 +114,9 @@ const mapSearch = {
         
         // 결과 목록 표시
         mapUI.showSearchResults(results, query, source);
-    },
+    }
     
-    displayDBResults: function(results, query, source) {
-        results.forEach((place, index) => {
-            const position = new kakao.maps.LatLng(place.latitude, place.longitude);
-            
-            const marker = new kakao.maps.Marker({
-                position: position,
-                map: mapMain.map
-            });
-            
-            // 마커 클릭 이벤트
-            kakao.maps.event.addListener(marker, 'click', function() {
-                mapMarkers.setCurrentMarker(marker);
-                mapInfo.showPlaceInfo(place, marker);
-            });
-            
-            mapMain.markers.push(marker);
-            
-            // 첫 번째 마커 정보 표시
-            if (index === 0) {
-                mapMarkers.setCurrentMarker(marker);
-                mapInfo.showPlaceInfo(place, marker);
-                mapMain.map.panTo(position);
-            }
-        });
-        
-        // 결과 목록 표시
-        mapUI.showSearchResults(results, query, source);
-    },
-    
-    searchKakao: function(query) {
-        mapMain.places.keywordSearch(query, (data, status) => {
-            if (status === kakao.maps.services.Status.OK) {
-                console.log(`카카오 검색 성공: ${data.length}개`);
-                this.displayKakaoResults(data, query);
-            } else {
-                mapUI.showMessage(`"${query}"에 대한 검색 결과가 없습니다`);
-            }
-        });
-    },
-    
-    displayKakaoResults: function(results, query) {
+    displayKakaoResults(results, query) {
         results.forEach((place, index) => {
             const position = new kakao.maps.LatLng(place.y, place.x);
             
@@ -189,4 +149,6 @@ const mapSearch = {
         // 결과 목록 표시
         mapUI.showSearchResults(results, query, '카카오맵');
     }
-};
+}
+
+const mapSearch = new MapSearchController();

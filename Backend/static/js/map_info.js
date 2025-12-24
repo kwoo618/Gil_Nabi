@@ -1,9 +1,11 @@
 // static/js/map_info.js - 통합 장소 정보 표시
-const mapInfo = {
-    currentInfoWindow: null,
-    
+class MapInfoController {
+    constructor() {
+        this.currentInfoWindow = null;
+    }
+
     // 정보창 표시
-    showPlaceInfo: function(place, marker) {
+    showPlaceInfo(place, marker) {
         if (this.currentInfoWindow) {
             this.currentInfoWindow.close();
         }
@@ -17,18 +19,18 @@ const mapInfo = {
         this.currentInfoWindow = mapMain.infowindow;
         mapMain.currentPlace = normalizedPlace;
         mapMarkers.setCurrentMarker(marker);
-    },
+    }
     
-    closeInfo: function() {
+    closeInfo() {
         if (this.currentInfoWindow) {
             this.currentInfoWindow.close();
             this.currentInfoWindow = null;
         }
         mapMain.currentPlace = null;
-    },
+    }
     
     // 데이터 정규화
-    normalizePlace: function(place) {
+    normalizePlace(place) {
         return {
             id: place.id || place.place_id,
             building_name: place.building_name || place.place_name,
@@ -42,10 +44,10 @@ const mapInfo = {
             score: place.score,
             review_count: place.review_count
         };
-    },
+    }
     
     // 정보창 내용 생성
-    createInfoContent: function(place) {
+    createInfoContent(place) {
         let content = `
             <div style="padding:15px; min-width:300px; max-width:400px;">
                 <h4 style="margin:0 0 10px 0; color:#333;">${place.building_name}</h4>
@@ -91,10 +93,10 @@ const mapInfo = {
         
         content += `</div>`;
         return content;
-    },
+    }
     
     // 수정 폼 표시
-    showEditForm: function() {
+    showEditForm() {
         const place = mapMain.currentPlace;
         if (!place) return;
         
@@ -141,10 +143,10 @@ const mapInfo = {
         `;
         
         mapMain.infowindow.setContent(content);
-    },
+    }
     
     // 라디오 버튼 생성 (여기 수정됨)
-    createRadioButtons: function(field, value) {
+    createRadioButtons(field, value) {
         const name = `${field}_radio`;
         // value가 정확히 false일 때만 checked
         const isFalse = value === false;
@@ -165,16 +167,16 @@ const mapInfo = {
                        ${isNull ? 'checked' : ''}> ?
             </label>
         `;
-    },
+    }
     
-    getAccessIcon: function(value) {
+    getAccessIcon(value) {
         if (value === true) return '<span style="color:#28a745;">✅</span>';
         if (value === false) return '<span style="color:#dc3545;">❌</span>';
         return '<span style="color:#ffc107;">❓</span>';
-    },
+    }
     
     // 수정 내용 저장 (여기 수정됨)
-    saveEdit: async function() {
+    async saveEdit() {
         const form = document.getElementById('edit-form');
         if (!form || !mapMain.currentPlace) return;
         
@@ -225,16 +227,16 @@ const mapInfo = {
             console.error('수정 오류:', error);
             alert('수정 중 오류가 발생했습니다');
         }
-    },
+    }
     
-    cancelEdit: function() {
+    cancelEdit() {
         const marker = mapMarkers.getCurrentMarker();
         if (mapMain.currentPlace && marker) {
             this.showPlaceInfo(mapMain.currentPlace, marker);
         }
-    },
+    }
     
-    getCSRFToken: function() {
+    getCSRFToken() {
         let csrftoken = null;
         if (document.cookie) {
             document.cookie.split(';').forEach(cookie => {
@@ -246,4 +248,6 @@ const mapInfo = {
         }
         return csrftoken;
     }
-};
+}
+
+const mapInfo = new MapInfoController();

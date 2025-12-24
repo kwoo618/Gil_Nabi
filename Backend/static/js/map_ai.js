@@ -1,14 +1,20 @@
 // static/js/map_ai.js
-
-const mapAI = {
-    getRecommendation: async function() {
+class MapAIController {
+    async getRecommendation() {
         // 로그인 확인 로직 제거됨 (비회원도 가능하게)
 
         mapUI.showLoading('AI 분석 중...');
         
         try {
+            // 현재 지도 중심 좌표 (사용자 위치로 간주)
+            const center = mapMain.map.getCenter();
+            
             const params = {
                 map_bounds: mapMain.getMapBounds(),
+                user_location: {
+                    latitude: center.getLat(),
+                    longitude: center.getLng()
+                },
                 limit: 5
             };
             
@@ -55,4 +61,6 @@ const mapAI = {
             mapUI.showMessage('AI 추천을 가져올 수 없습니다');
         }
     }
-};
+}
+
+const mapAI = new MapAIController();

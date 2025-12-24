@@ -1,7 +1,7 @@
 // static/js/voice_handler.js
-const voiceHandler = {
+class VoiceHandlerController {
     // 음성 인식 (STT)
-    startVoiceRecognition: function() {
+    startVoiceRecognition() {
         if (!('webkitSpeechRecognition' in window)) {
             alert('음성 인식이 지원되지 않는 브라우저입니다');
             return;
@@ -12,12 +12,13 @@ const voiceHandler = {
         recognition.interimResults = false;
         recognition.lang = 'ko-KR';
         
-        recognition.onstart = function() {
+        recognition.onstart = () => {
             console.log('음성 인식 시작');
-            document.getElementById('voice-btn').style.color = 'red';
+            const btn = document.getElementById('voice-btn');
+            if (btn) btn.style.color = 'red';
         };
         
-        recognition.onresult = function(event) {
+        recognition.onresult = (event) => {
             const transcript = event.results[0][0].transcript;
             console.log('인식된 텍스트:', transcript);
             
@@ -25,30 +26,31 @@ const voiceHandler = {
             document.getElementById('search-input').value = transcript;
             
             // AI 명령 처리
-            voiceHandler.processVoiceCommand(transcript);
+            this.processVoiceCommand(transcript);
         };
         
-        recognition.onerror = function(event) {
+        recognition.onerror = (event) => {
             console.error('음성 인식 오류:', event.error);
         };
         
-        recognition.onend = function() {
-            document.getElementById('voice-btn').style.color = 'black';
+        recognition.onend = () => {
+            const btn = document.getElementById('voice-btn');
+            if (btn) btn.style.color = 'black';
         };
         
         recognition.start();
-    },
+    }
     
     // 음성 출력 (TTS)
-    speak: function(text) {
+    speak(text) {
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = 'ko-KR';
         utterance.rate = 1.0;
         speechSynthesis.speak(utterance);
-    },
+    }
     
     // AI 명령 처리
-    processVoiceCommand: function(command) {
+    processVoiceCommand(command) {
         // "내 주변 휠체어 접근 가능한 카페"
         if (command.includes('휠체어') && command.includes('카페')) {
             document.getElementById('wheelchair').checked = true;
@@ -61,5 +63,11 @@ const voiceHandler = {
             mapAI.getRecommendation();
             this.speak('AI 추천을 시작합니다');
         }
+        // 일반 검색어인 경우 자동 검색
+        else {
+            mapSearch.search();
+        }
     }
-};
+}
+
+const voiceHandler = new VoiceHandlerController();
