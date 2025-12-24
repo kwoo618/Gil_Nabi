@@ -50,13 +50,19 @@ const debugHelper = {
         }
         
         // Filter API
+        // 지도 객체가 있으면 현재 보고 있는 범위를 사용하고, 없으면 기본 테스트 범위(고정값) 사용
+        let testBounds = {north: 35.91, south: 35.88, east: 128.87, west: 128.84};
+        if (typeof mapMain !== 'undefined' && mapMain.map) {
+            testBounds = mapMain.getMapBounds();
+        }
+
         try {
             const filterRes = await fetch('/api/places/filter/', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
                     filters: {},
-                    map_bounds: {north: 35.91, south: 35.88, east: 128.87, west: 128.84}
+                    map_bounds: testBounds
                 })
             });
             console.log("   - Filter API:", filterRes.ok ? "✓" : "✗");

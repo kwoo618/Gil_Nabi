@@ -14,6 +14,7 @@ class MapController {
             has_ramp: false,
             accessible_toilet: false
         };
+        this.userMarker = null;
     }
 
     // 초기화
@@ -47,6 +48,7 @@ class MapController {
             // 모듈 초기화
             mapFilter.init();
             this.loadInitialData();
+            this.moveToCurrentLocation();
             
             console.log('✅ 지도 초기화 완료');
         });
@@ -89,6 +91,39 @@ class MapController {
     // 필터 적용 여부 확인
     hasActiveFilters() {
         return Object.values(this.currentFilters).some(v => v);
+    }
+
+    // 현재 위치로 이동 및 마커 표시
+    moveToCurrentLocation() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+                    const locPosition = new kakao.maps.LatLng(lat, lon);
+
+                    this.map.setCenter(locPosition);
+                    this.displayUserMarker(locPosition);
+                },
+                (err) => {
+                    console.warn('위치 정보를 가져올 수 없습니다:', err);
+                }
+            );
+        }
+    }
+
+    displayUserMarker(locPosition) {
+        // 빨간색 작은 마커 이미지 사용
+        const imageSrc = 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_red.png';
+        const imageSize = new kakao.maps.Size(24, 24); // 작은 크기 설정
+        const markerImage = new kakao.maps.MarkerImage(imageSrc, imageSize);
+
+        this.userMarker = new kakao.maps.Marker({
+            map: this.map,
+            position: locPosition,
+            image: markerImage,
+            title: '현재 내 위치'
+        });
     }
 }
 
