@@ -113,6 +113,11 @@ class MapController {
     }
 
     displayUserMarker(locPosition) {
+        // 기존 내 위치 마커가 있다면 제거
+        if (this.userMarker) {
+            this.userMarker.setMap(null);
+        }
+
         // 빨간색 작은 마커 이미지 사용
         const imageSrc = 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_red.png';
         const imageSize = new kakao.maps.Size(24, 24); // 작은 크기 설정
@@ -123,6 +128,17 @@ class MapController {
             position: locPosition,
             image: markerImage,
             title: '현재 내 위치'
+        });
+
+        // 인포윈도우 생성
+        const iwContent = '<div style="padding:5px; font-size:12px;">내 위치</div>';
+        const infowindow = new kakao.maps.InfoWindow({
+            content: iwContent
+        });
+
+        // 마커 클릭 시 인포윈도우 표시
+        kakao.maps.event.addListener(this.userMarker, 'click', () => {
+            infowindow.open(this.map, this.userMarker);
         });
     }
 }

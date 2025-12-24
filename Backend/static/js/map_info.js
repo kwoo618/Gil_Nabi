@@ -206,7 +206,14 @@ class MapInfoController {
                 body: JSON.stringify(updateData)
             });
             
-            if (response.ok) {
+            if (response.status === 202) {
+                // 수정 요청 전송됨 (일반 회원)
+                const result = await response.json();
+                mapUI.showMessage(`📨 ${result.message}`);
+                this.cancelEdit(); // 폼 닫기
+            } 
+            else if (response.ok) {
+                // 즉시 수정됨 (관리자)
                 const updated = await response.json();
                 console.log('수정 성공:', updated);
                 

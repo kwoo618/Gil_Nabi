@@ -18,7 +18,7 @@ from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIV
 from django_filters.rest_framework import DjangoFilterBackend
 
 # 모델 및 시리얼라이저
-from .models import Accessibility
+from .models import Accessibility, ModificationRequest
 from .serializers import AccessibilitySerializer, AIRecommendationSerializer
 
 # 추천 및 필터 시스템
@@ -100,6 +100,32 @@ class PlaceRetrieveUpdateDestroy(RetrieveUpdateDestroyAPIView):
     def patch(self, request, *args, **kwargs):
         try:
             place = self.get_object()
+            
+            # 관리자가 아니면 수정 요청(ModificationRequest) 생성
+            if not request.user.is_staff:
+                if not request.user.is_authenticated:
+                    return Response({'error': '로그인이 필요합니다.'}, status=status.HTTP_401_UNAUTHORIZED)
+
+                # 요청 데이터 파싱
+                req_data = {}
+                update_fields = ['wheelchair', 'has_elevator', 'has_ramp', 'accessible_toilet']
+                for field in update_fields:
+                    if field in request.data:
+                        value = request.data[field]
+                        if value is None or value == 'null':
+                            req_data[field] = None
+                        else:
+                            if isinstance(value, str):
+                                req_data[field] = value.lower() == 'true'
+                            else:
+                                req_data[field] = bool(value)
+                
+                # 수정 요청 저장
+                ModificationRequest.objects.create(place=place, user=request.user, **req_data)
+                
+                return Response({'message': '수정 요청이 관리자에게 전송되었습니다.', 'is_request': True}, status=status.HTTP_202_ACCEPTED)
+
+            # 관리자인 경우 즉시 수정 (기존 로직)
             update_fields = ['wheelchair', 'has_elevator', 'has_ramp', 'accessible_toilet']
             for field in update_fields:
                 if field in request.data:
