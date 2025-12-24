@@ -8,6 +8,11 @@
     * `building_name`: 건물/장소 이름
     * `latitude`, `longitude`: 위도, 경도 좌표
     * `wheelchair`, `has_elevator`, `has_ramp`, `accessible_toilet`: 접근성 정보 (True/False/None)
+* **`class ModificationRequest`**: 일반 회원의 장소 정보 수정 요청을 저장하는 모델입니다.
+    * `place`: 대상 장소 (ForeignKey)
+    * `user`: 요청한 사용자 (ForeignKey)
+    * `status`: 요청 상태 (pending/approved/rejected)
+    * `wheelchair` 등: 변경 요청된 접근성 정보
 
 ## 2. views.py (API 뷰)
 * **`def test_page(request)`**: `map.html` 템플릿을 렌더링하여 지도를 보여줍니다.
@@ -15,7 +20,8 @@
     * `get_queryset()`: 검색어(이름)나 ID로 장소를 필터링하여 조회합니다.
     * `create()`: 새 장소를 저장합니다. 건물명이 없으면 `utils.py`를 통해 이름을 찾습니다.
 * **`class PlaceRetrieveUpdateDestroy`**: 특정 장소의 상세 조회, 수정, 삭제를 담당합니다.
-    * `patch()`: 장소의 접근성 정보를 부분 수정합니다.
+    * `patch()`: 관리자는 즉시 수정, 일반 회원은 `ModificationRequest`를 생성합니다.
+* **`class UserModificationRequestList`**: 로그인한 사용자가 보낸 수정 요청 목록을 반환합니다 (마이페이지용).
 * **`class FilterPlacesView`**: 필터링된 장소 목록을 반환합니다.
     * `post()`: 지도 범위와 필터 조건(휠체어 등)을 받아 검색 결과를 반환합니다.
 * **`class KakaoSearchProxy`**: 카카오 로컬 API를 서버에서 대신 호출합니다 (CORS 방지).
@@ -35,16 +41,21 @@
 
 ## 5. serializers.py (데이터 변환)
 * **`class AccessibilitySerializer`**: `Accessibility` 모델을 JSON으로 변환합니다.
+* **`class ModificationRequestSerializer`**: 수정 요청 정보를 JSON으로 변환합니다 (상태명 포함).
 * **`class AIRecommendationSerializer`**: AI 추천 결과를 클라이언트에 보낼 때 사용하는 포맷입니다.
 
 ## 6. utils.py (유틸리티)
 * **`def get_kakao_building_name(lat, lng)`**: 좌표(위도, 경도)를 주면 카카오 API를 사용해 건물 이름을 찾아줍니다.
 
 ## 7. urls.py (URL 설정)
-* API 엔드포인트와 뷰를 연결합니다. (`/api/places/`, `/api/places/filter/` 등)
+* API 엔드포인트와 뷰를 연결합니다. (`/api/places/`, `/api/places/my-requests/` 등)
 
 ## 8. admin.py (관리자 페이지)
 * **`class AccessibilityAdmin`**: Django 관리자 페이지에서 장소 데이터를 쉽게 관리할 수 있도록 설정합니다.
+* **`class ModificationRequestAdmin`**: 수정 요청을 관리합니다.
+    * `approve_requests`: 선택한 요청을 승인하고 실제 데이터에 반영합니다.
+    * `reject_requests`: 선택한 요청을 거절 처리합니다.
+    * `download_approved_excel`: 승인된 요청 내역을 엑셀(CSV)로 다운로드합니다.
 
 ## 9. tests.py (테스트)
 * **`class PlacesAPITest`**: API 기능이 정상 작동하는지 검증합니다.

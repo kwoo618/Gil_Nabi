@@ -9,7 +9,7 @@
 | **GET** | `/api/places/` | 장소 목록 조회 | `search`: 검색어 (선택)<br>`id`: 특정 장소 ID (선택) | 이름 유사도 검색 지원 |
 | **POST** | `/api/places/` | 신규 장소 등록 | `id`: 카카오 장소 ID (필수)<br>`building_name`: 건물명<br>`latitude`: 위도<br>`longitude`: 경도<br>`wheelchair`: 휠체어 여부 (T/F/Null)<br>...기타 접근성 필드 | 건물명 누락 시 좌표로 자동 검색 |
 | **GET** | `/api/places/<id>/` | 장소 상세 조회 | - | |
-| **PATCH** | `/api/places/<id>/` | 장소 정보 수정 | `wheelchair`, `has_elevator`, `has_ramp`, `accessible_toilet` 중 수정할 필드 | 부분 수정 가능 |
+| **PATCH** | `/api/places/<id>/` | 장소 정보 수정 | `wheelchair`, `has_elevator`, `has_ramp`, `accessible_toilet` 중 수정할 필드 | **일반 회원**: 수정 요청 생성 (202)<br>**관리자**: 즉시 수정 (200) |
 | **DELETE** | `/api/places/<id>/` | 장소 삭제 | - | |
 
 ## 2. 검색 및 필터링
@@ -25,7 +25,13 @@
 | :---: | :--- | :--- | :--- | :--- |
 | **POST** | `/api/places/ai-recommend/` | AI 기반 맞춤 장소 추천 | `map_bounds`: 지도 범위<br>`limit`: 추천 개수 (기본 5)<br>`filters`: 현재 적용된 필터 | Claude AI 연동<br>사용자 장애 유형 반영 |
 
-## 4. 기타
+## 4. 사용자 요청 관리
+
+| Method | Endpoint | 기능 설명 | 요청 파라미터 | 비고 |
+| :---: | :--- | :--- | :--- | :--- |
+| **GET** | `/api/places/my-requests/` | 내 수정 요청 목록 조회 | - | 로그인 필요 (Token) |
+
+## 5. 기타
 
 | Method | Endpoint | 기능 설명 | 비고 |
 | :---: | :--- | :--- | :--- |
